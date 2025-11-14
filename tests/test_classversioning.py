@@ -33,20 +33,7 @@ def tmp_dir(tmpdir):
 
 
 # Classes #
-class ClassTest:
-    """Default class tests that all classes should pass."""
-    class_ = None
-    timeit_runs = 100
-    speed_tolerance = 200
-
-    def get_log_lines(self, tmp_dir, logger_name):
-        path = tmp_dir.joinpath(f"{logger_name}.log")
-        with path.open() as f_object:
-            lines = f_object.readlines()
-        return lines
-
-
-class TestVersionedClass(ClassTest):
+class TestVersionedClass:
     # Define Classes with Versions
     class ExampleVersioning(VersionedClass):
         """A Version Class that establishes the type of class versioning the child classes will use."""

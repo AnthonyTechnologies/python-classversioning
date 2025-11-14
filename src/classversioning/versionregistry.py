@@ -16,45 +16,63 @@ __email__ = __email__
 # Imports #
 # Standard Libraries #
 import bisect
-from collections import UserDict
-from collections.abc import Iterable
 from importlib import import_module
 from typing import Any
+from warnings import warn
 
 # Third-Party Packages #
-from baseobjects import SentinelObject
-from baseobjects.versioning import VersionType, Version
+from baseobjects import SEARCHSENTINEL
+from baseobjects.classregistration import BaseClassRegistry
 
 # Local Packages #
 
 
 # Definitions #
-SENTINEL = SentinelObject("version_search")
-
-
+# Constants #
 # Classes #
-class VersionRegistry(UserDict):
+class VersionRegistry(BaseClassRegistry):
     """A dictionary like class that holds versioned objects.
 
     The keys distinguish different types of objects from one another, so their version are not mixed together. The items
     are lists containing the versioned objects in order by version.
     """
 
-    # Instance Methods
-    def get_version(
+    # Instance Methods #
+    # Registry
+    def register_class(self, cls: type, group: str = "default") -> None:
+        """Adds a versioned item into the registry.
+
+        Args
+            cls: The versioned cls to add to the registry.
+            type_: The type of versioned object to add.
+        """
+        if self.head_class is not None and not isinstance(cls.VERSION, self.head_class.VERSION_TYPE):
+            raise TypeError(
+                f"The registered class {str(cls)} has a version type of {str(cls.VERSION.VERSION_TYPE)} "
+                f"which is not compatible with the registry's head class {str(self.head_class)}."
+            )
+
+        if (versions := self.data.get(group, None)) is not None:
+            bisect.insort(versions, cls)
+        else:
+            self.data[group] = [cls]
+    
+    def get_class(
         self,
-        type_: str | VersionType,
-        key: Version | Iterable[int] | str | int,
+        key: Any,
         exact: bool = False,
+        group: str = "default",
         module: str | None = None,
+        default: Any = SEARCHSENTINEL,
     ) -> Any:
         """Gets an object from the registry based on the type and version of object.
 
         Args:
-            type_: The type of versioned object to get.
             key: The key to search for the versioned object with.
             exact: Determines whether the exact version is need or return the closest version.
+            group: The group of versioned classes to get.
             module: The module to import if the version does not exist.
+            default: A default object to return if a version cannot be found.
 
         Returns
             obj: The versioned object.
@@ -62,96 +80,69 @@ class VersionRegistry(UserDict):
         Raises
             ValueError: If there is no closest version.
         """
-        if isinstance(type_, VersionType):
-            type_ = type_.name
-
-        if (item := self.data.get(type_, None)) is None:
-            if module is not None:
+        # Get Versions
+        if (group_versions := self.data.get(group, None)) is None and module is not None:
+            try:
                 import_module(module)
-            item = self.data.get(type_, None)
+            except Exception as e:
+                warn(f"Failed to import module '{module}' with error: {e}, skipping.")
+            else:
+                group_versions = self.data.get(group, None)
 
-        versions = item["list"]
-        if isinstance(key, str) or isinstance(key, list) or isinstance(key, tuple):
-            version_class = self.data[type_]["type"].class_
-            key = version_class.cast(key)
+        if group_versions is None:
+            if default is SEARCHSENTINEL:
+                raise KeyError(f"Group '{group}' not found.")
+            else:
+                return default
 
-        if exact:
-            index = versions.index(key)
-        else:
-            index = bisect.bisect(versions, key) - 1
+        # Ensure key is the correct type
+        if not isinstance(key, self.head_class.VERSION_TYPE):
+            key = self.head_class.VERSION_TYPE.cast(key)
+
+        # Search for version
+        index = group_versions.index(key) if exact else bisect.bisect_left(group_versions, key)
+        if index < 0:
+            try:
+                import_module(module)
+            except Exception as e:
+                warn(f"Failed to import module '{module}' with error: {e}, skipping.")
+            else:
+                index = group_versions.index(key) if exact else bisect.bisect_left(group_versions, key)
 
         if index < 0:
-            raise ValueError(f"Version needs to be greater than {str(versions[0])}, {str(key)} is not.")
+            if default is SEARCHSENTINEL:
+                raise ValueError(f"Version needs to be greater than {str(group_versions[0])}, {str(key)} is not.")
+            else:
+                return default
         else:
-            return versions[index]
+            return group_versions[index]
 
-    def get_latest_version(self, type_: str | VersionType, default: Any = SENTINEL) -> Any:
+    def get_latest_version(self, group: str = "defualt", default: Any = SEARCHSENTINEL) -> Any:
         """Gets an object from the registry based on the type and the latest version of that object.
 
         Args:
-            type_: The type of versioned object to get.
+            group: The group of versioned classes to get.
             default: A default object to return if a version cannot be found.
 
         Returns
             obj: The versioned object.
         """
-        if isinstance(type_, VersionType):
-            type_ = type_.name
+        versions = self.data.get(group, None)
+        return versions[-1] if versions or default is SEARCHSENTINEL else default
 
-        versions = self.data.get(type_, {}).get("list", [])
-        return versions[-1] if versions or default is SENTINEL else default
-
-    def get_version_type(self, name: str, default: Any = SENTINEL, module: str | None = None) -> VersionType:
-        """Gets the type object being used as a key.
-
-        Args:
-            name: The name of the type object.
-            default: A default value to return if the version does not exist.
-            module: The module to import if the version does not exist.
+    def get_version_type(self) -> type:
+        """Gets the type of version being used.
 
         Returns:
-            The type object requested.
+            The type of version being used.
         """
-        if (item := self.data.get(name, None)) is None:
-            if module is not None:
-                import_module(module)
-            if default is SENTINEL:
-                return self.data[name]["type"]
-            else:
-                item = self.data.get(name, None)
-        return default if item is None else item["type"]
+        return self.head_class.VERSION_TYPE
 
-    def add_item(self, item: Any, type_: VersionType | str | None = None) -> None:
-        """Adds a versioned item into the registry.
-
-        Args
-            item: The versioned object to add.
-            type_: The type of versioned object to add.
-        """
-        if isinstance(type_, str):
-            name = type_
-            type_ = self.data[name]["type"]
-        else:
-            if type_ is None:
-                type_ = item.version_type
-            name = type_.name
-
-        if name in self.data:
-            bisect.insort(self.data[name]["list"], item)
-        else:
-            self.data[name] = {"type": type_, "list": [item]}
-
-    def sort(self, type_: str | None = None, **kwargs: Any) -> None:
+    def sort(self, group: str = "default", **kwargs: Any) -> None:
         """Sorts the registry.
 
         Args:
-            type_: The type of versioned object to add.
+            group: The group of versioned classes to sort.
             **kwargs: Keyword arguments that are passed to the list sort function.
         """
-        if type_ is None:
-            for versions in self.data.values():
-                versions["list"].sort(**kwargs)
-        else:
-            if isinstance(type_, VersionType):
-                type_ = type_.name
-            self.data[type_]["list"].sort(**kwargs)
+        self.data[group].sort(**kwargs)
