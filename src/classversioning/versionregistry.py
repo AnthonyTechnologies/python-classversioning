@@ -1,16 +1,19 @@
 """versionregistry.py
-VersionRegistry creates registries of the Versions which keep track of several versioning schemas. For example, there
-could be two different file types that both use TriNumberVersions, this registry keeps the class versions from these
-different files separate from each other.
+A registry for grouping and retrieving versioned classes.
+
+VersionRegistry stores versioned classes in groups so their versions are not mixed. For example, two different file
+formats may both use the same Version type; this registry keeps their class versions separate.
 """
-# Package Header #
-from .header import *
 
 # Header #
-__author__ = __author__
-__credits__ = __credits__
-__maintainer__ = __maintainer__
-__email__ = __email__
+__package_name__ = "classversioning"
+
+__author__ = "Anthony Fong"
+__credits__ = ["Anthony Fong"]
+__copyright__ = "Copyright 2021, Anthony Fong"
+__license__ = "MIT"
+
+__version__ = "0.8.0"
 
 
 # Imports #
@@ -31,32 +34,53 @@ from baseobjects.classregistration import BaseClassRegistry
 # Constants #
 # Classes #
 class VersionRegistry(BaseClassRegistry):
-    """A dictionary like class that holds versioned objects.
+    """A dictionary-like registry that holds versioned classes.
 
-    The keys distinguish different types of objects from one another, so their version are not mixed together. The items
-    are lists containing the versioned objects in order by version.
+    Keys represent groups of related classes so their versions are not mixed. Each group's value is a list of classes
+    ordered by their version.
     """
 
     # Instance Methods #
-    # Registry
-    def register_class(self, cls: type, group: str = "default") -> None:
-        """Adds a versioned item into the registry.
+    def _load_module(self, module: str) -> bool:
+        """Loads a module if it exists.
 
-        Args
-            cls: The versioned cls to add to the registry.
-            type_: The type of versioned object to add.
+        Args:
+            module: The name of the module to load.
+
+        Returns:
+            True if the module was successfully imported, False otherwise.
+        """
+        try:
+            import_module(module)
+        except Exception as e:
+            msg = f"Failed to import module '{module}' with error: {e}, skipping."
+            warn(msg)
+            return False
+        else:
+            return True
+
+    # Registry
+    def register_class(self, cls: type, group: str = "default", *args: Any, **kwargs) -> None:
+        """Adds a versioned class to the registry.
+
+        Args:
+            cls: The versioned class to add to the registry.
+            group: The group name under which to register the class.
+            *args: Positional arguments to pass to the registry.
+            **kwargs: Keyword arguments to pass to the registry.
         """
         if self.head_class is not None and not isinstance(cls.VERSION, self.head_class.VERSION_TYPE):
-            raise TypeError(
+            msg = (
                 f"The registered class {str(cls)} has a version type of {str(cls.VERSION.VERSION_TYPE)} "
                 f"which is not compatible with the registry's head class {str(self.head_class)}."
             )
+            raise TypeError(msg)
 
         if (versions := self.data.get(group, None)) is not None:
             bisect.insort(versions, cls)
         else:
             self.data[group] = [cls]
-    
+
     def get_class(
         self,
         key: Any,
@@ -65,33 +89,30 @@ class VersionRegistry(BaseClassRegistry):
         module: str | None = None,
         default: Any = SEARCHSENTINEL,
     ) -> Any:
-        """Gets an object from the registry based on the type and version of object.
+        """Gets a class from the registry based on the requested version.
 
         Args:
-            key: The key to search for the versioned object with.
-            exact: Determines whether the exact version is need or return the closest version.
-            group: The group of versioned classes to get.
-            module: The module to import if the version does not exist.
-            default: A default object to return if a version cannot be found.
+            key: The key to search for (e.g., a version or value castable to the version type).
+            exact: If True, require an exact version match; otherwise return the closest version.
+            group: The group of versioned classes to search.
+            module: Optional module to import if the version does not exist yet in the registry.
+            default: A default value to return if a class cannot be found.
 
-        Returns
-            obj: The versioned object.
+        Returns:
+            The versioned class corresponding to the requested version.
 
-        Raises
-            ValueError: If there is no closest version.
+        Raises:
+            KeyError: If the group does not exist and no default is provided.
+            ValueError: If no suitable version exists and no default is provided.
         """
         # Get Versions
-        if (group_versions := self.data.get(group, None)) is None and module is not None:
-            try:
-                import_module(module)
-            except Exception as e:
-                warn(f"Failed to import module '{module}' with error: {e}, skipping.")
-            else:
-                group_versions = self.data.get(group, None)
+        if (group_versions := self.data.get(group, None)) is None and module is not None and self._load_module(module):
+            group_versions = self.data.get(group, None)
 
         if group_versions is None:
             if default is SEARCHSENTINEL:
-                raise KeyError(f"Group '{group}' not found.")
+                msg = f"Group '{group}' not found."
+                raise KeyError(msg)
             else:
                 return default
 
@@ -100,32 +121,45 @@ class VersionRegistry(BaseClassRegistry):
             key = self.head_class.VERSION_TYPE.cast(key)
 
         # Search for version
-        index = group_versions.index(key) if exact else bisect.bisect_left(group_versions, key)
-        if index < 0:
+        index = None
+        while exact:
             try:
-                import_module(module)
-            except Exception as e:
-                warn(f"Failed to import module '{module}' with error: {e}, skipping.")
+                index = group_versions.index(key)
+            except ValueError:
+                if index is not None:
+                    break
+                if module is not None:
+                    self._load_module(module)
+                index = -1
             else:
-                index = group_versions.index(key) if exact else bisect.bisect_left(group_versions, key)
+                break
+
+        if not exact:
+            index = bisect.bisect_right(group_versions, key) - 1
+            if index < 0 and module is not None and self._load_module(module):
+                index = bisect.bisect_right(group_versions, key) - 1
 
         if index < 0:
             if default is SEARCHSENTINEL:
-                raise ValueError(f"Version needs to be greater than {str(group_versions[0])}, {str(key)} is not.")
+                if exact:
+                    msg = f"Exact version {str(key)} not found."
+                else:
+                    msg = f"Version needs to be greater than {str(group_versions[0])}, {str(key)} is not."
+                raise ValueError(msg)
             else:
                 return default
         else:
             return group_versions[index]
 
-    def get_latest_version(self, group: str = "defualt", default: Any = SEARCHSENTINEL) -> Any:
-        """Gets an object from the registry based on the type and the latest version of that object.
+    def get_latest_version(self, group: str = "default", default: Any = SEARCHSENTINEL) -> Any:
+        """Gets the latest versioned class from the registry.
 
         Args:
             group: The group of versioned classes to get.
-            default: A default object to return if a version cannot be found.
+            default: A default value to return if a class cannot be found.
 
-        Returns
-            obj: The versioned object.
+        Returns:
+            The class with the latest version for the specified group, or `default` if none exists.
         """
         versions = self.data.get(group, None)
         return versions[-1] if versions or default is SEARCHSENTINEL else default
@@ -134,7 +168,7 @@ class VersionRegistry(BaseClassRegistry):
         """Gets the type of version being used.
 
         Returns:
-            The type of version being used.
+            The version type used by the head class for this registry.
         """
         return self.head_class.VERSION_TYPE
 

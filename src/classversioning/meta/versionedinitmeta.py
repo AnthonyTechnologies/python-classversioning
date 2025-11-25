@@ -1,14 +1,19 @@
 """versionedinitmeta.py
-A mixed class of the InitMeta and VersionMeta.
+A metaclass combining initialization hooks with version comparisons.
+
+VersionedInitMeta merges the initialization behavior of InitMeta with the
+version-aware comparison features provided by VersionedMeta.
 """
-# Package Header #
-from ..header import *
 
 # Header #
-__author__ = __author__
-__credits__ = __credits__
-__maintainer__ = __maintainer__
-__email__ = __email__
+__package_name__ = "classversioning"
+
+__author__ = "Anthony Fong"
+__credits__ = ["Anthony Fong"]
+__copyright__ = "Copyright 2021, Anthony Fong"
+__license__ = "MIT"
+
+__version__ = "0.8.0"
 
 
 # Imports #
@@ -24,4 +29,7 @@ from .versionedmeta import VersionedMeta
 # Definitions #
 # Meta Classes #
 class VersionedInitMeta(InitMeta, VersionedMeta):
-    """A mixed class of the InitMeta and VersionMeta."""
+    """Metaclass combining initialization hooks with version comparisons.
+
+    Merges the initialization behavior of InitMeta with the version-aware comparison features provided by VersionedMeta.
+    """

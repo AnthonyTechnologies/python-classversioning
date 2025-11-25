@@ -1,52 +1,89 @@
-[tool.poetry]
+# Project Configurations #
+[project]
+# Project Details
 name = "classversioning"
-version = "0.8.0"
 description = "Tools for create versioning for classes using inheritance."
-authors = ["Anthony Fong <FongAnthonyM@gmail.com>"]
+dynamic = ["version", "readme"]  # Get the version and readme from the tool.poetry section
+classifiers = ["Development Status :: 4 - Beta"]
+
+# Staff
+authors = [{name = "Anthony Fong", email = ""}]
+maintainers = [{name = "Anthony Fong", email = ""}]
+
+# License
 license = "MIT"
-readme = "README.rst"
-homepage = "https://github.com/FongAnthonyM/classversioning"
-repository = "https://github.com/FongAnthonyM/classversioning"
-documentation = "https://classversioning.readthedocs.io"
-classifiers = [
-    "Development Status :: 4 - Beta",
+license-files = ["LICENSE"]
+
+# Package Dependencies
+requires-python = ">=3.11"  # Upper bound defined in tool.poetry.dependencies
+dependencies = [
+    "baseobjects>=1.12.0"
 ]
 
-[tool.poetry.urls]
-Changelog = "https://github.com/FongAnthonyM/classversioning/releases"
+# URLs
+[project.urls]
+homepage = "https://github.com/AnthonyTechnologies/python-classversioning"
+repository = "https://github.com/AnthonyTechnologies/python-classversioning"
+documentation = "https://python-classversioning.readthedocs.io"
+changelog = "https://github.com/AnthonyTechnologies/python-classversioning/releases"
 
+# Optional Dependencies
+[project.optional-dependencies]
+dev = [
+    "coverage[toml]>=6.2",
+    "click>=8.0.3",
+    "furo>=2021.11.12",
+    "isort>=5.10.1",
+    "mypy>=0.930",
+    "nox>=2025.5.1",
+    "nox-poetry>=1.2.0",
+    "pep8-naming>=0.12.1",
+    "pre-commit>=2.16.0",
+    "pre-commit-hooks>=4.1.0",
+    "Pygments>=2.10.0",
+    "pytest>=6.2.5",
+    "pytest-asyncio>=1.2.0",
+    "pyupgrade>=2.29.1",
+    "ruff>=0.14.0",
+    "safety>=1.10.3",
+    "sphinx>=4.3.2",
+    "sphinx-autobuild>=2021.3.14",
+    "sphinx-click>=3.0.2",
+    "sphinx-rtd-theme>=3.0.2",
+    "typeguard>=2.13.3",
+    "xdoctest[colors]>=0.15.10",
+    "myst-parser>=0.16.1",
+]
+jupyter = [
+    "jupyter>=1.1.1",
+]
+
+
+# Project Build
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+
+# Poetry
+[tool.poetry]
+version = "0.8.0"
+readme = ["README.rst"]
+packages = [
+    { include = "classversioning", from = "src" },
+]
+
+# Lock Dependencies
 [tool.poetry.dependencies]
-python = ">=3.10, <4.0"
-click = ">=8.0.1"
-baseobjects = ">=1.11.0"
+python = ">=3.11, <4.0"
+bidict = ">=0.22.0"
 
-[tool.poetry.dev-dependencies]
-pytest = ">=6.2.5"
-coverage = {extras = ["toml"], version = ">=6.1"}
-safety = ">=1.10.3"
-mypy = ">=0.910"
-typeguard = ">=2.13.2"
-xdoctest = {extras = ["colors"], version = ">=0.15.10"}
-sphinx = ">=4.3.0"
-sphinx-autobuild = ">=2021.3.14"
-pre-commit = ">=2.15.0"
-flake8 = ">=4.0.1"
-black = ">=21.11b1"
-flake8-bandit = ">=2.1.2"
-flake8-bugbear = ">=21.9.2"
-flake8-docstrings = ">=1.6.0"
-flake8-rst-docstrings = ">=0.2.3"
-pep8-naming = ">=0.12.1"
-darglint = ">=1.8.1"
-reorder-python-imports = ">=2.6.0"
-pre-commit-hooks = ">=4.0.1"
-sphinx-rtd-theme = ">=1.0.0"
-sphinx-click = ">=3.0.2"
-Pygments = ">=2.10.0"
+[tool.poetry.requires-plugins]
+poetry-plugin-export = ">=1.8"
 
-[tool.poetry.scripts]
-classversioning = "classversioning.__main__:main"
 
+# Development Configurations
+# Coverage
 [tool.coverage.paths]
 source = ["src", "*/site-packages"]
 
@@ -58,6 +95,8 @@ source = ["classversioning"]
 show_missing = true
 fail_under = 100
 
+
+# MYPY
 [tool.mypy]
 strict = true
 warn_unreachable = true
@@ -66,6 +105,115 @@ show_column_numbers = true
 show_error_codes = true
 show_error_context = true
 
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+
+# Ruff
+[tool.ruff]
+preview = true
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+    "examples",  # Has a separate lint
+    "tests",  # Has a separate lint
+    "tutorials",  # Has a separate lint
+    "docs",
+]
+line-length = 120
+indent-width = 4
+
+[tool.ruff.lint]
+select = [
+    "YTT",
+    "ANN",
+    "ASYNC",
+    "S",
+    "B",
+    "A",
+    "COM",
+    "C4",
+    "DTZ",
+    "EM",
+    "PIE",
+    "PT",
+    "Q",
+    "RSE",
+    "RET",
+    "PTH",
+    "N",
+    "E",
+    "W",
+    "DOC",
+    "D",
+    "F",
+    "UP",
+    "RUF",
+]
+ignore = [
+    "ANN401",  # Disallow typing.Any
+    "S101",  # Disallow assert
+    "S301",  # Disallow pickle
+    "S403",  # Disallow pickle, pickle.load, pickle.loads
+    "B024",  # Disallow abstract base class without abstract methods
+    "B027",  # Empty methods MUST be abstract methods
+    "A003",  # Disallow class attribute shadowing builtins
+    "A005",  # Disallow class attribute shadowing module-level variables
+    "RET505",  # Disallow unnecessary else after return statement
+    "N801",  # Class name must use CapWords convention
+    "N812",  # Lowercase imports must be casted "as" lowercase as well
+    "DOC201",  # Returns must be documented in docstring
+    "DOC202",  # Disallow Returns in docstring if there are no Returns
+    "D205",  # 1 blank line required between summary line and description
+    "D401",  # Disallow imperative mood in docstring
+    "D415",  # The first line must end with a period
+    "F401",  # All imports must be used
+    "F403",  # Disallow wildcard imports (from module import *)
+]
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.format]
+indent-style = "space"  # Python convention, use spaces rather than tabs
+line-ending = "auto"  # Detect Line ending
+skip-magic-trailing-comma = false  # Comma used at the end of multi-line lists
+quote-style = "double"  # Like C++ double quotes for strings and single for char
+docstring-code-format = false  # Format code in docstrings
+docstring-code-line-length = "dynamic"
+
+# isort [Import Sorting]
+[tool.isort]
+profile = "black"
+line_length = 120
+multi_line_output = 3
+import_heading_stdlib = "Standard Libraries #"
+import_heading_thirdparty = "Third-Party Packages #"
+import_heading_firstparty = "Source Packages #"
+import_heading_localfolder = "Local Packages #"

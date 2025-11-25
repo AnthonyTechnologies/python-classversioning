@@ -1,16 +1,20 @@
 """versionedclass.py
-VersionedClass is an abstract class which has an associated version which can be used to compare against other
-VersionedClasses. Typically, a base class for a version schema should directly inherit from VersionedClass then the
-actual versions should inherit from that base class.
+A base class for versioned subclass hierarchies.
+
+This module provides VersionedClass, an abstract base that associates each subclass with a version to enable comparison
+and dispatch based on version. Typically, a concrete "head" class for a version schema should inherit directly from
+VersionedClass, and concrete versioned implementations should inherit from that head class.
 """
-# Package Header #
-from .header import *
 
 # Header #
-__author__ = __author__
-__credits__ = __credits__
-__maintainer__ = __maintainer__
-__email__ = __email__
+__package_name__ = "classversioning"
+
+__author__ = "Anthony Fong"
+__credits__ = ["Anthony Fong"]
+__copyright__ = "Copyright 2021, Anthony Fong"
+__license__ = "MIT"
+
+__version__ = "0.8.0"
 
 
 # Imports #
@@ -29,17 +33,20 @@ from .versionregistry import VersionRegistry
 # Definitions #
 # Classes #
 class VersionedClass(DispatchableClass, metaclass=VersionedMeta):
-    """An abstract class allows child classes to specify its version which it can use to compare and dispatch.
+    """Abstract base class for versioned subclass hierarchies.
 
-    Class Attributes:
-        class_registry: A registry of all subclasses and versions of this class.
-        _dispatch_kwarg: The name of the kwarg to use for version dispatching when a new object is made.
-        _registration: Specifies if versions will be tracked and will recurse to parent.
-        _VERSION_TYPE: The type of version this object will be.
-        VERSION: The version of this class as a string.
+    Subclasses may specify a VERSION that is used for comparison and dispatch. A head class defines VERSION_TYPE, and
+    concrete implementations inherit from the head and set VERSION accordingly.
+
+    Attributes:
+        class_registry: Registry of subclasses grouped by version.
+        VERSION_TYPE: The version type for this hierarchy.
+        VERSION: The version value associated with this class.
+        _dispatch_kwarg: The keyword name used for dispatch during construction.
     """
     # Class Attributes #
     class_registry: ClassVar[VersionRegistry | None] = None
+    default_group: ClassVar[str] = "default"
 
     VERSION_TYPE: ClassVar[type[Version] | None] = None
     VERSION: ClassVar[Version | None] = None
@@ -48,94 +55,121 @@ class VersionedClass(DispatchableClass, metaclass=VersionedMeta):
 
     # Class Methods #
     # Construction/Destruction
-    def __init_subclass__(cls, namespace: str | None = None, name: str | None = None, **kwargs: Any) -> None:
-        """The init when creating a subclass.
+    def __init_subclass__(cls, group: str | None = None, **kwargs: Any) -> None:
+        """Initializes a newly created subclass.
 
         Args:
-            **kwargs: Keyword arguments for creating a subclass.
+            group: The group of versioned classes to register this subclass to.
+            **kwargs: Additional keyword arguments for subclass creation.
         """
-        super().__init_subclass__(namespace, name, **kwargs)
-
-        # Add subclass to the registry.
+        # Cast VERSION to VERSION_TYPE #
         if cls.class_registration and not isinstance(cls.VERSION, cls.VERSION_TYPE):
             cls.VERSION = cls.VERSION_TYPE(cls.VERSION)
 
-    # Registry
+        # Register the Subclass #
+        register_kwargs = {"group": (cls.default_group if group is None else group)}
+        super().__init_subclass__(register_kwargs, **kwargs)
+
     @classmethod
-    def register_class(cls, group: str = "default") -> None:
-        """Registers this class with the given namespace and name.
+    def get_class_information(cls, obj: Any, **kwargs: Any) -> tuple[Any]:
+        """Gets the version from an object to dispatch to the correct subclass.
 
         Args:
-            group: The group of versioned classes to register this class to.
-        """
-        cls.class_registry.register_class(cls, group)
+             obj: The object to get the version from.
+             **kwargs: Keyword arguments.
 
+        Returns:
+            A tuple containing the version of the object.
+        """
+        version = cls.get_version_from_object(obj)
+        return (version,)
+
+    # Registry
     @classmethod
     def get_registered_class(
         cls,
         version: Version | str | Iterable,
         exact: bool = False,
-        group: str = "default",
+        group: str | None = None,
         sort: bool = False,
         module: str | None = None,
     ) -> "VersionedClass":
-        """Gets a class based on the version.
+        """Gets a registered class based on the version.
 
         Args:
-            version: The key to search for the class with.
-            group: The group of versioned classes to get.
-            exact: Determines whether the exact version is need or return the closest version.
-            sort: If True, sorts the registry before getting the class.
-            module: The module to import if the class is not found.
+            version: The version key to search for the class with.
+            exact: If True, require an exact version match; otherwise return the closest version.
+            group: The group of versioned classes to search.
+            sort: If True, sort the registry before getting the class.
+            module: Optional module to import if the class is not found.
 
         Returns:
-            obj: The class found.
+            The class matching the requested version.
         """
+        if group is None:
+            group = cls.default_group
         return cls.get_version_class(version, exact=exact, group=group, sort=sort, module=module)
 
     # Version
     @classmethod
     def get_version_from_object(cls, obj: Any) -> Version | str | Iterable:
-        """An optional abstract method that must return a version from an object."""
-        raise NotImplementedError("This method needs to be set in the version head to dispatch the propper class.")
+        """Returns a version extracted from an object.
+
+        This abstract method should be implemented by the head class to support dispatching to the proper versioned
+        subclass based on the provided object. For example, the object could be a file, and this method would read the
+        file and find the version.
+
+        Args:
+            obj: The object from which to extract the version.
+
+        Returns:
+            The version, or a value that can be cast to the version type.
+        """
+        raise NotImplementedError("This method needs to be set in the version head to dispatch the proper class.")
 
     @classmethod
     def get_version_class(
         cls,
         version: Version | str | Iterable,
         exact: bool = False,
-        group: str = "default",
+        group: str | None = None,
         sort: bool = False,
         module: str | None = None,
     ) -> "VersionedClass":
-        """Gets a class based on the version.
+        """Gets a class based on the requested version.
 
         Args:
-            version: The key to search for the class with.
-            group: The group of versioned classes to get.
-            exact: Determines whether the exact version is need or return the closest version.
-            sort: If True, sorts the registry before getting the class.
-            module: The module to import if the class is not found.
+            version: The version key to search for the class with.
+            exact: If True, require an exact version match; otherwise return the closest version.
+            group: The group of versioned classes to search.
+            sort: If True, sort the registry before getting the class.
+            module: Optional module to import if the class is not found.
 
         Returns:
-            obj: The class found.
+            The class matching the requested version.
         """
+        if group is None:
+            group = cls.default_group
+
         if sort:
             cls.class_registry.sort(group)
 
         return cls.class_registry.get_class(version, exact=exact, group=group, module=module)
 
     @classmethod
-    def get_latest_version_class(cls, group: str = "default", sort: bool = False) -> "VersionedClass":
-        """Gets a class based on the latest version.
+    def get_latest_version_class(cls, group: str | None = None, sort: bool = False) -> "VersionedClass":
+        """Gets the class with the latest available version.
 
         Args:
-            group: The group of versioned classes to get.
-            sort: If True, sorts the registry before getting the class.
+            group: The group of versioned classes to query.
+            sort: If True, sort the registry before retrieving the class.
 
         Returns:
-            obj: The class found.
+            The class associated with the latest version in the specified group.
         """
+        if group is None:
+            group = cls.default_group
+
         if sort:
             cls.class_registry.sort(group)
 

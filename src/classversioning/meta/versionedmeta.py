@@ -1,14 +1,20 @@
 """versionedmeta.py
-A Meta Class that can compare the specified version of the classes.
+A metaclass that enables version-aware class comparisons.
+
+VersionedMeta classes are augmented so they may be ordered based on a class attribute, VERSION. It enables comparing
+classes (and versions) using standard comparison operators, provided a VERSION_TYPE and VERSION are defined in the
+class.
 """
-# Package Header #
-from ..header import *
 
 # Header #
-__author__ = __author__
-__credits__ = __credits__
-__maintainer__ = __maintainer__
-__email__ = __email__
+__package_name__ = "classversioning"
+
+__author__ = "Anthony Fong"
+__credits__ = ["Anthony Fong"]
+__copyright__ = "Copyright 2021, Anthony Fong"
+__license__ = "MIT"
+
+__version__ = "0.8.0"
 
 
 # Imports #
@@ -25,11 +31,14 @@ from baseobjects.versioning import Version
 # Definitions #
 # Classes #
 class VersionedMeta(BaseMeta):
-    """A Meta Class that can compare the specified version of the classes.
+    """A metaclass that enables version-aware class comparisons.
 
-    Class Attributes:
-        _VERSION_TYPE: The type of version this object will be.
-        VERSION: The version of this class as a string.
+    Classes using this metaclass can define a version type and a version value to support ordering and equality
+    comparisons using standard operators.
+
+    Attributes:
+        VERSION_TYPE: The concrete version type used by classes (e.g., Version).
+        VERSION: The version value associated with the class (an instance of VERSION_TYPE).
     """
     VERSION_TYPE: type | None = None
     VERSION: Version | None = None
@@ -46,16 +55,16 @@ class VersionedMeta(BaseMeta):
 
     # Comparison
     def __eq__(cls, other: Any) -> bool:
-        """Expands on equals comparison to include comparing the version.
+        """Returns True if the classes are equal considering their versions.
 
         Args:
-            other: The object to compare to this class.
+            other: The object to compare against this class.
 
         Returns:
-            True if the other object is equivalent to this class, including version.
+            True if equivalent to this class, including version.
 
         Raises:
-            TypeError: If 'other' is a type that cannot be compared to.
+            TypeError: If other is not a comparable type.
         """
         if isinstance(other, cls.__class__):
             if id(cls) == id(object):
@@ -79,16 +88,16 @@ class VersionedMeta(BaseMeta):
             raise TypeError(f"'==' not supported between instances of '{str(cls)}' and '{str(other)}'")
 
     def __ne__(cls, other: Any) -> bool:
-        """Expands on not equals comparison to include comparing the version.
+        """Returns True if the classes are not equal considering their versions.
 
         Args:
-            other: The object to compare to this class.
+            other: The object to compare against this class.
 
         Returns:
-            True if the other object is not equivalent to this class, including version number.
+            True if not equivalent to this class, including version.
 
         Raises:
-            TypeError: If 'other' is a type that cannot be compared to.
+            TypeError: If other is not a comparable type.
         """
         if isinstance(other, cls.__class__):
             if cls.VERSION_TYPE != other.VERSION_TYPE:
@@ -110,16 +119,16 @@ class VersionedMeta(BaseMeta):
             raise TypeError(f"'!=' not supported between instances of '{str(cls)}' and '{str(other)}'")
 
     def __lt__(cls, other: Any) -> bool:
-        """Creates the less than comparison which compares the version of this class.
+        """Returns True if this class's version is less than the other's.
 
         Args:
-            other: The object to compare to this class.
+            other: The object to compare against this class.
 
         Returns:
-            True if this object is less than to the other classes' version.
+            True if this class's version is less than other.
 
         Raises:
-            TypeError: If 'other' is a type that cannot be compared to.
+            TypeError: If other is not a comparable type.
         """
         if isinstance(other, cls.__class__):
             if cls.VERSION_TYPE != other.VERSION_TYPE:
@@ -136,16 +145,16 @@ class VersionedMeta(BaseMeta):
             raise TypeError(f"'<' not supported between instances of '{str(cls)}' and '{str(other)}'")
 
     def __gt__(cls, other: Any) -> bool:
-        """Creates the greater than comparison which compares the version of this class.
+        """Returns True if this class's version is greater than the other's.
 
         Args:
-            other: The object to compare to this class.
+            other: The object to compare against this class.
 
         Returns:
-            True if this object is greater than to the other classes' version.
+            True if this class's version is greater than other.
 
         Raises:
-            TypeError: If 'other' is a type that cannot be compared to.
+            TypeError: If other is not a comparable type.
         """
         if isinstance(other, cls.__class__):
             if cls.VERSION_TYPE != other.VERSION_TYPE:
@@ -162,16 +171,16 @@ class VersionedMeta(BaseMeta):
             raise TypeError(f"'>' not supported between instances of '{str(cls)}' and '{str(other)}'")
 
     def __le__(cls, other: Any) -> bool:
-        """Creates the less than or equal to comparison which compares the version of this class.
+        """Returns True if this class's version is <= the other's.
 
         Args:
-            other: The object to compare to this class.
+            other: The object to compare against this class.
 
         Returns:
-            True if this object is less than or equal to the other classes' version.
+            True if this class's version is less than or equal to other.
 
         Raises:
-            TypeError: If 'other' is a type that cannot be compared to.
+            TypeError: If other is not a comparable type.
         """
         if isinstance(other, cls.__class__):
             if cls.VERSION_TYPE != other.VERSION_TYPE:
@@ -188,16 +197,16 @@ class VersionedMeta(BaseMeta):
             raise TypeError(f"'<=' not supported between instances of '{str(cls)}' and '{str(other)}'")
 
     def __ge__(cls, other: Any) -> bool:
-        """Creates the greater than or equal to comparison which compares the version of this class.
+        """Returns True if this class's version is >= the other's.
 
         Args:
-            other: The object to compare to this class.
+            other: The object to compare against this class.
 
         Returns:
-            True if this object is greater than or equal to the other classes' version.
+            True if this class's version is greater than or equal to other.
 
         Raises:
-            TypeError: If 'other' is a type that cannot be compared to.
+            TypeError: If other is not a comparable type.
         """
         if isinstance(other, cls.__class__):
             if cls.VERSION_TYPE != other.VERSION_TYPE:

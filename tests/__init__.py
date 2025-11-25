@@ -1,13 +1,17 @@
-"""Test suite for the classversioning package."""
-# Package Header #
-from src.classversioning.header import *
+"""__init__.py
+The concrete test suite for the classversioning package.
+
+This module serves as an initialization file for the tests package, which contains unit tests for the classversioning
+package. It provides a structured testing framework to ensure the functionality and reliability of the classversioning
+components. The tests are organized into subpackages that mirror the structure of the main package.
+"""
 
 # Header #
-__author__ = __author__
-__credits__ = __credits__
-__maintainer__ = __maintainer__
-__email__ = __email__
+__package_name__ = "classversioning"
 
+__author__ = "Anthony Fong"
+__credits__ = ["Anthony Fong"]
+__copyright__ = "Copyright 2021, Anthony Fong"
+__license__ = "MIT"
 
-# Imports #
-# Local Packages #
+__version__ = "0.8.0"

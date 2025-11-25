@@ -1,20 +1,23 @@
 """__init__.py
-Provides version tools for create versioning for classes using inheritance. A VersionedClass is structured so any
-subclasses can optionally define a version which can be used to compare other subclasses. This versioning framework
-can also be used for objects of these classes, but it is primarily designed around versioning classes. Versioning is
-useful for creating classes that interface with datastructures that change frequently and support for previous versions
-are needed. For example, a file type may change how data is stored within it, but you might have files of the new and
-previous version. In this case an appropriate class which addresses each version can be chosen based on the version of
-the file which can be defined by the class' version.
+Tools for creating versioned class hierarchies.
+
+A VersionedClass is structured so that subclasses can optionally define a version which can be used to compare with
+other subclasses and for dispatch. The framework can also be used by instances of these classes, but it is primarily
+focused on versioning classes. Versioning is useful for creating classes that interface with data structures that change
+frequently while maintaining support for previous versions. For example, a file format may change how data is stored, but
+you might have both new and previous versions. In this case, an appropriate class addressing each version can be chosen
+based on the class' version.
 """
-# Package Header #
-from .header import *
 
 # Header #
-__author__ = __author__
-__credits__ = __credits__
-__maintainer__ = __maintainer__
-__email__ = __email__
+__package_name__ = "classversioning"
+
+__author__ = "Anthony Fong"
+__credits__ = ["Anthony Fong"]
+__copyright__ = "Copyright 2021, Anthony Fong"
+__license__ = "MIT"
+
+__version__ = "0.8.0"
 
 
 # Imports #

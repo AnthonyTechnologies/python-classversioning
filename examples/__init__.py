@@ -1,8 +1,5 @@
 """__init__.py
-The source code of classversioning.
-
-This top-level package directory contains the implementation modules for the
-classversioning library following a src/ layout.
+Examples for the classversioning package.
 """
 
 # Header #
