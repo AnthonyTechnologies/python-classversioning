@@ -22,6 +22,8 @@ Table of Contents
    :caption: Concepts
    :maxdepth: 1
 
+   concepts/classversioning
+
 .. toctree::
    :caption: Tutorials and Examples
    :maxdepth: 1

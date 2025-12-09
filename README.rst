@@ -36,7 +36,65 @@ classversioning
 Features
 --------
 
-Add a description of the package here!
+Tools for creating versioned class hierarchies.
+
+A VersionedClass is structured so that subclasses can optionally define a version which can be used to compare with
+other subclasses and for dispatch. The framework can also be used by instances of these classes, but it is primarily
+focused on versioning classes. Versioning is useful for creating classes that interface with data structures that change
+frequently while maintaining support for previous versions. For example, a file format may change how data is stored,
+but you might have both new and previous versions. In this case, an appropriate class addressing each version can be
+chosen based on the class' version.
+
+Example
+-------
+
+This example demonstrates how to use the head class dispatch to automatically handle different file versions.
+
+.. code-block:: python
+
+    import json
+    from pathlib import Path
+    from classversioning import TriNumberVersion, VersionedClass, VersionRegistry
+
+    class FileManager(VersionedClass):
+        """Head class that dispatches to subclasses based on file version."""
+        class_registration = True
+        class_registry_type = VersionRegistry
+        VERSION_TYPE = TriNumberVersion
+
+        @classmethod
+        def get_version_from_object(cls, obj):
+            # Extract version from file content
+            with Path(obj).open("r") as f:
+                ver = json.load(f).get("version", "0.0.0")
+                return TriNumberVersion(*map(int, ver.split(".")))
+
+        def __init__(self, file_path):
+            self.file_path = Path(file_path)
+
+        def process(self):
+             print(f"Processing V? file: {self.file_path}")
+
+    class FileManagerV1(FileManager):
+        VERSION = TriNumberVersion(1, 0, 0)
+
+        def process(self):
+            print(f"Processing V1 file: {self.file_path}")
+
+    class FileManagerV2(FileManager):
+        VERSION = TriNumberVersion(2, 0, 0)
+
+        def process(self):
+            print(f"Processing V2 file: {self.file_path}")
+
+    # Usage:
+    # If 'data.json' contains {"version": "2.0.0"}
+    manager = FileManager("data.json")
+
+    # manager is automatically an instance of FileManagerV2
+    print(type(manager))  # <class 'FileManagerV2'>
+    manager.process()     # Output: Processing V2 file: data.json
+
 
 Requirements
 ------------

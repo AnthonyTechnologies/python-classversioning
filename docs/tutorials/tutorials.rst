@@ -7,11 +7,13 @@ Tutorials and Examples
 
 This project includes additional tutorials and examples in the repository to help you learn by doing.
 
-Repository Tutorials
---------------------
+Jupyter Tutorials
+-----------------
 
-- Jupyter notebooks: see the ``tutorials/`` directory.
-- Code examples: see the ``examples/`` directory.
+The following Jupyter notebooks are available in the ``tutorials/`` directory of the repository:
+
+* **Versioned Class Tutorial**: ``tutorials/versionedclass_tutorial.ipynb`` - A guide on creating and using versioned classes.
+* **Versioned File Management Tutorial**: ``tutorials/versioned_file_management_tutorial.ipynb`` - Applying versioning to file management systems.
 
 To run the notebooks locally, install the optional dependencies and launch Jupyter:
 
@@ -20,4 +22,11 @@ To run the notebooks locally, install the optional dependencies and launch Jupyt
    pip install -e .[jupyter]
    jupyter notebook tutorials/
 
-Note: The documentation site does not render the notebooks directly. Use the links above to explore them locally.
+Code Examples
+-------------
+
+The ``examples/`` directory contains Python scripts demonstrating key features:
+
+* **versionedclass_example.py**: Basic usage of ``VersionedClass``.
+* **versionregistry_example.py**: How to use the ``VersionRegistry``.
+* **file_manager_example.py**: An example of building a file manager with versioned classes.
