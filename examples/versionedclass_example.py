@@ -49,7 +49,7 @@ class DataProcessor(VersionedClass):
         Returns:
             The version string found in the object.
         """
-        return obj.get("version", "0.0.0")
+        return str(obj.get("version", "0.0.0"))
 
     def process(self, data: dict[str, Any]) -> None:
         """Abstract process method to be implemented by subclasses."""
@@ -61,6 +61,11 @@ class DataProcessorV1(DataProcessor):
     VERSION = TriNumberVersion(1, 0, 0)
 
     def process(self, data: dict[str, Any]) -> None:
+        """Processes the data.
+
+        Args:
+            data: The data to process.
+        """
         print(f"Processing V1 data: {data['payload']}")
 
 
@@ -69,6 +74,11 @@ class DataProcessorV2(DataProcessor):
     VERSION = TriNumberVersion(2, 0, 0)
 
     def process(self, data: dict[str, Any]) -> None:
+        """Processes the data.
+
+        Args:
+            data: The data to process.
+        """
         # V2 processes data differently (e.g., uppercase payload)
         print(f"Processing V2 data (enhanced): {data['payload'].upper()}")
 

@@ -1,10 +1,8 @@
 """versionedclasstestsuite.py
 A reusable test suite for VersionedClass hierarchies.
 
- Subclasses must supply concrete class references and version-like values by setting the required
-class attributes documented below.
-
-This suite is built on baseobjects.testsuite.BaseClassTestSuite.
+Subclasses must supply concrete class references and version-like values by setting the required class attributes
+documented below.
 """
 
 # Header #
@@ -20,8 +18,8 @@ __version__ = "0.8.0"
 
 # Imports #
 # Standard Libraries #
-from typing import Any, ClassVar
 from collections.abc import Iterable
+from typing import Any, ClassVar
 
 # Third-Party Packages #
 import pytest
@@ -36,18 +34,16 @@ from ..versionedclass import VersionedClass
 class VersionedClassTestSuite(BaseRegisteredClassTestSuite):  # type: ignore[misc]
     """Reusable base tests for a VersionedClass hierarchy.
 
-    Subclass this in your test modules and set the class attributes to supply concrete
-    classes and parameters for the tests. Only the datasets relevant to your hierarchy
-    need to be provided; individual tests will be skipped if their required dataset is
-    missing.
+    Subclass this in your test modules and set the class attributes to supply concrete classes and parameters for the
+    tests. Only the datasets relevant to your hierarchy need to be provided; individual tests will be skipped if their
+    required dataset is missing.
 
     Required attributes for specific tests:
         TestClass: The version head class (a subclass of VersionedClass). Required by all tests.
         get_cases: Iterable of tuples (key, expected_cls, exact, group, sort, module)
             Used by test_get_version_class. "group" may be None to use the default.
         registered_cases: Iterable of tuples (key, expected_cls, exact, group, sort, module)
-            Used by test_get_registered_class. If omitted, test mirrors get_cases with the
-            same parameters.
+            Used by test_get_registered_class. If omitted, test mirrors get_cases with the same parameters.
         auto_version_cases: Iterable of tuples (dispatch_obj, expected_cls)
             Used by test_auto_version to validate construction-time dispatch.
         latest_cases: Iterable of tuples (group, expected_cls, sort)
@@ -172,8 +168,8 @@ class VersionedClassTestSuite(BaseRegisteredClassTestSuite):  # type: ignore[mis
     ) -> None:
         """Tests VersionedClass.get_registered_class wrapper.
 
-        Mirrors get_version_class but calls the wrapper API to ensure the default group
-        handling and delegation are correct.
+        Mirrors get_version_class but calls the wrapper API to ensure the default group handling and delegation are
+        correct.
 
         Args:
             key: The key to search for (e.g., a version or value castable to the version type).
@@ -189,8 +185,8 @@ class VersionedClassTestSuite(BaseRegisteredClassTestSuite):  # type: ignore[mis
     def test_version_dispatch(self) -> None:
         """Tests that the head class correctly dispatches to subclasses based on input.
 
-        Validates that instantiating the head class with a dispatch object returns an instance
-        of the correct versioned subclass.
+        Validates that instantiating the head class with a dispatch object returns an instance of the correct versioned
+        subclass.
         """
         for dispatch_obj, expected_cls in self.auto_version_cases:
             obj = self.TestClass(dispatch_obj)

@@ -15,7 +15,7 @@ __version__ = "0.8.0"
 
 # Imports #
 # Standard Libraries #
-from typing import Any
+from typing import Any, ClassVar
 
 # Third-Party Packages #
 import pytest
@@ -165,14 +165,15 @@ class TestExampleVersionedClass(VersionedClassTestSuite):
     def test_registry_calls(self) -> None:
         """Tests delegation of calls to the class registry.
 
-        Verifies that get_version_class and get_latest_version_class raise ValueError
-        if the registry is not set, and correctly delegate to the registry when it is set.
+        Verifies that get_version_class and get_latest_version_class raise ValueError if the registry is not set, and
+        correctly delegate to the registry when it is set.
         """
+        # Standard Libraries #
         from unittest.mock import patch
 
         class Head(VersionedClass):
             VERSION_TYPE = TriNumberVersion
-            class_registry = None
+            class_registry: ClassVar[VersionRegistry | None] = None
 
         with pytest.raises(ValueError, match="Class registry is not set"):
             Head.get_version_class("1.0.0")
@@ -212,8 +213,8 @@ class TestExampleVersionedClass(VersionedClassTestSuite):
     def test_init_subclass_cast(self) -> None:
         """Tests automatic version casting during subclass initialization.
 
-        Verifies that if a subclass defines VERSION as a string (or castable type),
-        it is automatically cast to the correct VERSION_TYPE during class initialization.
+        Verifies that if a subclass defines VERSION as a string (or castable type), it is automatically cast to the
+        correct VERSION_TYPE during class initialization.
         """
         class Head(VersionedClass):
             VERSION_TYPE = TriNumberVersion
@@ -221,7 +222,7 @@ class TestExampleVersionedClass(VersionedClassTestSuite):
             class_registration = True
 
         class VString(Head):
-            VERSION = "1.0.0"
+            VERSION = "1.0.0"  # type: ignore[assignment]
 
         assert isinstance(VString.VERSION, TriNumberVersion)
         assert VString.VERSION == TriNumberVersion(1, 0, 0)

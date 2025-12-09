@@ -15,11 +15,11 @@ __version__ = "0.8.0"
 
 # Imports #
 # Standard Libraries #
-from typing import Any
+from typing import Any, ClassVar
 
 # Third-Party Packages #
 import pytest
-from baseobjects.versioning import Version
+from baseobjects.versioning import Version  # type: ignore[attr-defined]
 
 # Source Packages #
 from classversioning import TriNumberVersion, VersionedClass, VersionRegistry
@@ -59,9 +59,9 @@ class TestVersionRegistry(VersionRegistryTestSuite):
     ExampleClass2 = V2  # type: ignore
 
     # Cases
-    register_cases = ["default", "custom_group"]
+    register_cases: ClassVar[list[str]] = ["default", "custom_group"]
 
-    get_cases = [
+    get_cases: ClassVar[list[Any]] = [
         # key, expected, exact, group, default
         (TriNumberVersion(1, 0, 0), V1, True, "default", None),
         (TriNumberVersion(2, 0, 0), V2, True, "default", None),
@@ -72,7 +72,7 @@ class TestVersionRegistry(VersionRegistryTestSuite):
         (TriNumberVersion(0, 1, 0), None, False, "default", None),  # Should fail (no version <= 0.1.0)
     ]
 
-    latest_cases = [
+    latest_cases: ClassVar[list[Any]] = [
         ("default", V2),
     ]
 

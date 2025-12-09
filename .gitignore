@@ -49,6 +49,7 @@ htmlcov
 .project
 .pydevproject
 ../.idea
+.idea
 .junie
 .vscode
 *.iml

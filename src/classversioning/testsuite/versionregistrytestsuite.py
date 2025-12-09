@@ -15,19 +15,17 @@ __version__ = "0.8.0"
 
 # Imports #
 # Standard Libraries #
-from typing import Any, ClassVar
 from collections.abc import Iterable
+from typing import Any, ClassVar
 from unittest.mock import patch
 
 # Third-Party Packages #
 import pytest
-from baseobjects.testsuite.classregistration import BaseClassRegistryTestSuite  # type: ignore
+from baseobjects.testsuite import BaseClassRegistryTestSuite  # type: ignore
 from baseobjects.versioning import TriNumberVersion, Version  # type: ignore
 
 # Local Packages #
 from ..versionedclass import VersionedClass
-
-# Local Imports #
 from ..versionregistry import VersionRegistry
 
 
@@ -98,7 +96,7 @@ class VersionRegistryTestSuite(BaseClassRegistryTestSuite):
             default: The default value to return if a class cannot be found.
 
         Raises:
-            ValueError: If the class cannot be found and no default is provided.
+            ValueError: If the registry is not set.
         """
         class_registry = self.create_test_registry()
         class_registry.register_class(self.ExampleClass2, group=group)
@@ -182,6 +180,7 @@ class VersionRegistryTestSuite(BaseClassRegistryTestSuite):
         Verifies that attempting to register a class with a version type incompatible with the registry's head class
         raises a TypeError.
         """
+
         class Head(VersionedClass):
             VERSION_TYPE = TriNumberVersion
 
@@ -192,18 +191,41 @@ class VersionRegistryTestSuite(BaseClassRegistryTestSuite):
                 self.v = v
                 self.VERSION_TYPE = ConcreteVersion
 
-            def __eq__(self, other: Any) -> bool: return self.v == other.v
-            def __lt__(self, other: Any) -> bool: return self.v < other.v
-            def __str__(self) -> str: return str(self.v)
-            def __hash__(self) -> int: return hash(self.v)
-            def __ge__(self, other: Any) -> bool: return self.v >= other.v
-            def __gt__(self, other: Any) -> bool: return self.v > other.v
-            def __le__(self, other: Any) -> bool: return self.v <= other.v
-            def __ne__(self, other: Any) -> bool: return self.v != other.v
-            def list(self) -> list[Any]: return [self.v]
-            def tuple(self) -> tuple[Any, ...]: return (self.v,)
-            def construct(self, *args: Any, **kwargs: Any) -> None: pass
-            def str(self) -> str: return str(self.v)
+            def __eq__(self, other: Any) -> bool:
+                return bool(self.v == other.v)
+
+            def __lt__(self, other: Any) -> bool:
+                return bool(self.v < other.v)
+
+            def __str__(self) -> str:
+                return str(self.v)
+
+            def __hash__(self) -> int:
+                return hash(self.v)
+
+            def __ge__(self, other: Any) -> bool:
+                return bool(self.v >= other.v)
+
+            def __gt__(self, other: Any) -> bool:
+                return bool(self.v > other.v)
+
+            def __le__(self, other: Any) -> bool:
+                return bool(self.v <= other.v)
+
+            def __ne__(self, other: Any) -> bool:
+                return bool(self.v != other.v)
+
+            def list(self) -> list[Any]:
+                return [self.v]
+
+            def tuple(self) -> tuple[Any, ...]:
+                return (self.v,)
+
+            def construct(self, *args: Any, **kwargs: Any) -> None:
+                pass
+
+            def str(self) -> str:
+                return str(self.v)
 
         class WrongVer(VersionedClass):
             VERSION_TYPE = ConcreteVersion
@@ -264,8 +286,10 @@ class VersionRegistryTestSuite(BaseClassRegistryTestSuite):
         """
         registry = self.TestClass()
         with patch("classversioning.versionregistry.import_module") as mock_import:
+
             def side_effect(name: str) -> None:
                 registry.data["loaded"] = ["something"]
+
             mock_import.side_effect = side_effect
             res = registry.get_class("key", group="loaded", module="mod", default="found")
             assert res == "found"
@@ -291,6 +315,7 @@ class VersionRegistryTestSuite(BaseClassRegistryTestSuite):
 
             class V2(Head):
                 VERSION = TriNumberVersion(2)
+
             registry.data["g"] = [V2]
 
             with pytest.raises(ValueError, match="Version needs to be greater than"):

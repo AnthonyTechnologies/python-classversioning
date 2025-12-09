@@ -47,17 +47,21 @@ class FileManager(VersionedClass):
 
         Returns:
             The version object found in the file, or None if not found.
+
+        Raises:
+            FileNotFoundError: If the file does not exist.
         """
         path = Path(obj)
         if not path.exists():
-            raise FileNotFoundError(f"File not found: {path}")
+            msg = f"File not found: {path}"
+            raise FileNotFoundError(msg)
 
         try:
             with path.open("r") as f:
                 data = json.load(f)
-                version_str = data.get("version", "0.0.0")
-                parts = map(int, version_str.split('.'))
-                return TriNumberVersion(*parts)
+                version_str = str(data.get("version", "0.0.0"))
+                parts = [int(p) for p in version_str.split(".")]
+                return TriNumberVersion(parts[0], parts[1], parts[2])
         except Exception as e:
             print(f"Error reading version from file: {e}")
             return None
@@ -81,8 +85,13 @@ class FileManagerV1(FileManager):
     VERSION = TriNumberVersion(1, 0, 0)
 
     def load_data(self) -> dict[str, Any]:
+        """Loads data from the file.
+
+        Returns:
+            The loaded data.
+        """
         with self.file_path.open("r") as f:
-            data = json.load(f)
+            data: dict[str, Any] = json.load(f)
         print(f"V1 Manager loading data: {data}")
         return data
 
@@ -92,8 +101,13 @@ class FileManagerV2(FileManager):
     VERSION = TriNumberVersion(2, 0, 0)
 
     def load_data(self) -> dict[str, Any]:
+        """Loads data from the file.
+
+        Returns:
+            The loaded data with V2 processing.
+        """
         with self.file_path.open("r") as f:
-            data = json.load(f)
+            data: dict[str, Any] = json.load(f)
         # V2 might need some transformation
         data["processed"] = True
         print(f"V2 Manager loading data with processing: {data}")

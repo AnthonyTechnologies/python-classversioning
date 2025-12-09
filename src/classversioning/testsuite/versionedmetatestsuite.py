@@ -16,13 +16,13 @@ __version__ = "0.8.0"
 # Imports #
 # Standard Libraries #
 import operator
-from typing import Any, ClassVar
 from collections.abc import Callable
+from typing import Any, ClassVar
 from unittest.mock import MagicMock, patch
 
 # Third-Party Packages #
 import pytest
-from baseobjects.testsuite import BaseTestSuite
+from baseobjects.testsuite import BaseTestSuite  # type: ignore[attr-defined]
 from baseobjects.versioning import TriNumberVersion, Version  # type: ignore
 
 # Local Packages #
@@ -41,7 +41,7 @@ class VersionedMetaTestSuite(BaseTestSuite):  # type: ignore[misc]
 
     # Fixtures #
     @pytest.fixture
-    def versioned_classes(self) -> tuple[type, dict[Version | None, type]]:
+    def versioned_classes(self) -> tuple[type, dict[Any, type]]:
         """Creates a set of versioned classes for testing.
 
         Returns:
@@ -49,8 +49,9 @@ class VersionedMetaTestSuite(BaseTestSuite):  # type: ignore[misc]
         """
         v_1 = self.first_version
         v_2 = self.second_version
+        test_meta: type[VersionedMeta] = self.TestMeta
 
-        class Head(metaclass=self.TestMeta):
+        class Head(metaclass=test_meta):  # type: ignore[metaclass]
             VERSION_TYPE = self.version_type
             VERSION: Version | None = None
 
@@ -116,12 +117,14 @@ class VersionedMetaTestSuite(BaseTestSuite):  # type: ignore[misc]
         head, _ = versioned_classes
 
         with patch("builtins.id") as mock_id:
+
             def side_effect(obj: Any) -> Any:
                 if obj is head:
                     return 123
                 if obj is object:
                     return 123
                 return 456 + (hash(obj) % 1000)
+
             mock_id.side_effect = side_effect
 
             # Trigger __eq__
@@ -129,22 +132,25 @@ class VersionedMetaTestSuite(BaseTestSuite):  # type: ignore[misc]
             # Should return True via id check
             assert (head == head) is True
 
-    @pytest.mark.parametrize(("cls_key", "other", "expected"), [
-        (first_version, ("cls", first_version), True),
-        (first_version, ("cls", second_version), False),
-        (first_version, first_version, True),
-        (first_version, second_version, False),
-        (first_version, "1.0.0", True),
-        (first_version, "2.0.0", False),
-        (first_version, object(), False),
-        (first_version, ("cls", "NoVerA"), False),
-        ("NoVerA", ("cls", "NoVerA"), True),
-        ("NoVerA", ("cls", "NoVerB"), False),
-        ("NoVerA", ("cls", first_version), False),
-        ("NoVerA", first_version, False),
-        ("NoVerA", "1.0.0", False),
-        ("NoVerA", object(), False),
-    ])
+    @pytest.mark.parametrize(
+        ("cls_key", "other", "expected"),
+        [
+            (first_version, ("cls", first_version), True),
+            (first_version, ("cls", second_version), False),
+            (first_version, first_version, True),
+            (first_version, second_version, False),
+            (first_version, "1.0.0", True),
+            (first_version, "2.0.0", False),
+            (first_version, object(), False),
+            (first_version, ("cls", "NoVerA"), False),
+            ("NoVerA", ("cls", "NoVerA"), True),
+            ("NoVerA", ("cls", "NoVerB"), False),
+            ("NoVerA", ("cls", first_version), False),
+            ("NoVerA", first_version, False),
+            ("NoVerA", "1.0.0", False),
+            ("NoVerA", object(), False),
+        ],
+    )
     def test_eq(self, versioned_classes: tuple[type, dict[Any, Any]], cls_key: Any, other: Any, expected: Any) -> None:
         """Tests the equality operator.
 
@@ -158,22 +164,25 @@ class VersionedMetaTestSuite(BaseTestSuite):  # type: ignore[misc]
         """
         self._test_operator(operator.eq, versioned_classes, cls_key, other, expected)
 
-    @pytest.mark.parametrize(("cls_key", "other", "expected"), [
-        (first_version, ("cls", second_version), True),
-        (first_version, ("cls", first_version), False),
-        (first_version, second_version, True),
-        (first_version, first_version, False),
-        (first_version, "2.0.0", True),
-        (first_version, "1.0.0", False),
-        (first_version, object(), True),
-        (first_version, ("cls", "NoVerA"), True),
-        ("NoVerA", ("cls", "NoVerA"), False),
-        ("NoVerA", ("cls", "NoVerB"), True),
-        ("NoVerA", ("cls", first_version), True),
-        ("NoVerA", first_version, True),
-        ("NoVerA", "1.0.0", True),
-        ("NoVerA", object(), True),
-    ])
+    @pytest.mark.parametrize(
+        ("cls_key", "other", "expected"),
+        [
+            (first_version, ("cls", second_version), True),
+            (first_version, ("cls", first_version), False),
+            (first_version, second_version, True),
+            (first_version, first_version, False),
+            (first_version, "2.0.0", True),
+            (first_version, "1.0.0", False),
+            (first_version, object(), True),
+            (first_version, ("cls", "NoVerA"), True),
+            ("NoVerA", ("cls", "NoVerA"), False),
+            ("NoVerA", ("cls", "NoVerB"), True),
+            ("NoVerA", ("cls", first_version), True),
+            ("NoVerA", first_version, True),
+            ("NoVerA", "1.0.0", True),
+            ("NoVerA", object(), True),
+        ],
+    )
     def test_ne(self, versioned_classes: tuple[type, dict[Any, Any]], cls_key: Any, other: Any, expected: Any) -> None:
         """Tests the inequality operator.
 
@@ -187,22 +196,25 @@ class VersionedMetaTestSuite(BaseTestSuite):  # type: ignore[misc]
         """
         self._test_operator(operator.ne, versioned_classes, cls_key, other, expected)
 
-    @pytest.mark.parametrize(("cls_key", "other", "expected"), [
-        (first_version, ("cls", second_version), True),
-        (first_version, ("cls", first_version), False),
-        (second_version, ("cls", first_version), False),
-        (first_version, second_version, True),
-        (first_version, "2.0.0", True),
-        (second_version, "1.0.0", False),
-        (first_version, object(), TypeError),
-        (first_version, ("cls", "NoVerA"), TypeError),
-        ("NoVerA", ("cls", "NoVerA"), TypeError),
-        ("NoVerA", ("cls", "NoVerB"), TypeError),
-        ("NoVerA", ("cls", first_version), TypeError),
-        ("NoVerA", first_version, TypeError),
-        ("NoVerA", "1.0.0", TypeError),
-        ("NoVerA", object(), TypeError),
-    ])
+    @pytest.mark.parametrize(
+        ("cls_key", "other", "expected"),
+        [
+            (first_version, ("cls", second_version), True),
+            (first_version, ("cls", first_version), False),
+            (second_version, ("cls", first_version), False),
+            (first_version, second_version, True),
+            (first_version, "2.0.0", True),
+            (second_version, "1.0.0", False),
+            (first_version, object(), TypeError),
+            (first_version, ("cls", "NoVerA"), TypeError),
+            ("NoVerA", ("cls", "NoVerA"), TypeError),
+            ("NoVerA", ("cls", "NoVerB"), TypeError),
+            ("NoVerA", ("cls", first_version), TypeError),
+            ("NoVerA", first_version, TypeError),
+            ("NoVerA", "1.0.0", TypeError),
+            ("NoVerA", object(), TypeError),
+        ],
+    )
     def test_lt(self, versioned_classes: tuple[type, dict[Any, Any]], cls_key: Any, other: Any, expected: Any) -> None:
         """Tests the less than operator.
 
@@ -216,22 +228,25 @@ class VersionedMetaTestSuite(BaseTestSuite):  # type: ignore[misc]
         """
         self._test_operator(operator.lt, versioned_classes, cls_key, other, expected)
 
-    @pytest.mark.parametrize(("cls_key", "other", "expected"), [
-        (second_version, ("cls", first_version), True),
-        (first_version, ("cls", second_version), False),
-        (first_version, ("cls", first_version), False),
-        (second_version, first_version, True),
-        (second_version, "1.0.0", True),
-        (first_version, "2.0.0", False),
-        (first_version, object(), TypeError),
-        (first_version, ("cls", "NoVerA"), TypeError),
-        ("NoVerA", ("cls", "NoVerA"), TypeError),
-        ("NoVerA", ("cls", "NoVerB"), TypeError),
-        ("NoVerA", ("cls", first_version), TypeError),
-        ("NoVerA", first_version, TypeError),
-        ("NoVerA", "1.0.0", TypeError),
-        ("NoVerA", object(), TypeError),
-    ])
+    @pytest.mark.parametrize(
+        ("cls_key", "other", "expected"),
+        [
+            (second_version, ("cls", first_version), True),
+            (first_version, ("cls", second_version), False),
+            (first_version, ("cls", first_version), False),
+            (second_version, first_version, True),
+            (second_version, "1.0.0", True),
+            (first_version, "2.0.0", False),
+            (first_version, object(), TypeError),
+            (first_version, ("cls", "NoVerA"), TypeError),
+            ("NoVerA", ("cls", "NoVerA"), TypeError),
+            ("NoVerA", ("cls", "NoVerB"), TypeError),
+            ("NoVerA", ("cls", first_version), TypeError),
+            ("NoVerA", first_version, TypeError),
+            ("NoVerA", "1.0.0", TypeError),
+            ("NoVerA", object(), TypeError),
+        ],
+    )
     def test_gt(self, versioned_classes: tuple[type, dict[Any, Any]], cls_key: Any, other: Any, expected: Any) -> None:
         """Tests the greater than operator.
 
@@ -245,22 +260,25 @@ class VersionedMetaTestSuite(BaseTestSuite):  # type: ignore[misc]
         """
         self._test_operator(operator.gt, versioned_classes, cls_key, other, expected)
 
-    @pytest.mark.parametrize(("cls_key", "other", "expected"), [
-        (first_version, ("cls", second_version), True),
-        (first_version, ("cls", first_version), True),
-        (second_version, ("cls", first_version), False),
-        (first_version, second_version, True),
-        (first_version, "2.0.0", True),
-        (second_version, "1.0.0", False),
-        (first_version, object(), TypeError),
-        (first_version, ("cls", "NoVerA"), TypeError),
-        ("NoVerA", ("cls", "NoVerA"), TypeError),
-        ("NoVerA", ("cls", "NoVerB"), TypeError),
-        ("NoVerA", ("cls", first_version), TypeError),
-        ("NoVerA", first_version, TypeError),
-        ("NoVerA", "1.0.0", TypeError),
-        ("NoVerA", object(), TypeError),
-    ])
+    @pytest.mark.parametrize(
+        ("cls_key", "other", "expected"),
+        [
+            (first_version, ("cls", second_version), True),
+            (first_version, ("cls", first_version), True),
+            (second_version, ("cls", first_version), False),
+            (first_version, second_version, True),
+            (first_version, "2.0.0", True),
+            (second_version, "1.0.0", False),
+            (first_version, object(), TypeError),
+            (first_version, ("cls", "NoVerA"), TypeError),
+            ("NoVerA", ("cls", "NoVerA"), TypeError),
+            ("NoVerA", ("cls", "NoVerB"), TypeError),
+            ("NoVerA", ("cls", first_version), TypeError),
+            ("NoVerA", first_version, TypeError),
+            ("NoVerA", "1.0.0", TypeError),
+            ("NoVerA", object(), TypeError),
+        ],
+    )
     def test_le(self, versioned_classes: tuple[type, dict[Any, Any]], cls_key: Any, other: Any, expected: Any) -> None:
         """Tests the less than or equal operator.
 
@@ -274,22 +292,25 @@ class VersionedMetaTestSuite(BaseTestSuite):  # type: ignore[misc]
         """
         self._test_operator(operator.le, versioned_classes, cls_key, other, expected)
 
-    @pytest.mark.parametrize(("cls_key", "other", "expected"), [
-        (second_version, ("cls", first_version), True),
-        (first_version, ("cls", first_version), True),
-        (first_version, ("cls", second_version), False),
-        (second_version, first_version, True),
-        (second_version, "1.0.0", True),
-        (first_version, "2.0.0", False),
-        (first_version, object(), TypeError),
-        (first_version, ("cls", "NoVerA"), TypeError),
-        ("NoVerA", ("cls", "NoVerA"), TypeError),
-        ("NoVerA", ("cls", "NoVerB"), TypeError),
-        ("NoVerA", ("cls", first_version), TypeError),
-        ("NoVerA", first_version, TypeError),
-        ("NoVerA", "1.0.0", TypeError),
-        ("NoVerA", object(), TypeError),
-    ])
+    @pytest.mark.parametrize(
+        ("cls_key", "other", "expected"),
+        [
+            (second_version, ("cls", first_version), True),
+            (first_version, ("cls", first_version), True),
+            (first_version, ("cls", second_version), False),
+            (second_version, first_version, True),
+            (second_version, "1.0.0", True),
+            (first_version, "2.0.0", False),
+            (first_version, object(), TypeError),
+            (first_version, ("cls", "NoVerA"), TypeError),
+            ("NoVerA", ("cls", "NoVerA"), TypeError),
+            ("NoVerA", ("cls", "NoVerB"), TypeError),
+            ("NoVerA", ("cls", first_version), TypeError),
+            ("NoVerA", first_version, TypeError),
+            ("NoVerA", "1.0.0", TypeError),
+            ("NoVerA", object(), TypeError),
+        ],
+    )
     def test_ge(self, versioned_classes: tuple[type, dict[Any, Any]], cls_key: Any, other: Any, expected: Any) -> None:
         """Tests the greater than or equal operator.
 
