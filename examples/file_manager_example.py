@@ -24,7 +24,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-# Third-Party Packages #
+# Source Packages #
 from classversioning import TriNumberVersion, VersionedClass, VersionRegistry
 
 

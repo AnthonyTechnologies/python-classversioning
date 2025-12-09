@@ -7,8 +7,8 @@ dynamic = ["version", "readme"]  # Get the version and readme from the tool.poet
 classifiers = ["Development Status :: 4 - Beta"]
 
 # Staff
-authors = [{name = "Anthony Fong", email = ""}]
-maintainers = [{name = "Anthony Fong", email = ""}]
+authors = [{name = "Anthony Fong"}]
+maintainers = [{name = "Anthony Fong"}]
 
 # License
 license = "MIT"
@@ -90,6 +90,7 @@ source = ["src", "*/site-packages"]
 [tool.coverage.run]
 branch = true
 source = ["classversioning"]
+omit = ["*/header.py", "*/testsuite/*"]
 
 [tool.coverage.report]
 show_missing = true
@@ -104,6 +105,7 @@ pretty = true
 show_column_numbers = true
 show_error_codes = true
 show_error_context = true
+exclude = ["docs/"]
 
 
 # Ruff

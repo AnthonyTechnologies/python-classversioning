@@ -19,11 +19,12 @@ __version__ = "0.8.0"
 
 # Imports #
 # Standard Libraries #
-from typing import Any, ClassVar, Iterable
+from typing import Any, ClassVar, cast
+from collections.abc import Iterable
 
 # Third-Party Packages #
-from baseobjects.versioning import Version
-from baseobjects.classregistration import DispatchableClass
+from baseobjects.classregistration import DispatchableClass  # type: ignore
+from baseobjects.versioning import Version  # type: ignore
 
 # Local Packages #
 from .meta import VersionedMeta
@@ -44,6 +45,7 @@ class VersionedClass(DispatchableClass, metaclass=VersionedMeta):
         VERSION: The version value associated with this class.
         _dispatch_kwarg: The keyword name used for dispatch during construction.
     """
+
     # Class Attributes #
     class_registry: ClassVar[VersionRegistry | None] = None
     default_group: ClassVar[str] = "default"
@@ -63,7 +65,7 @@ class VersionedClass(DispatchableClass, metaclass=VersionedMeta):
             **kwargs: Additional keyword arguments for subclass creation.
         """
         # Cast VERSION to VERSION_TYPE #
-        if cls.class_registration and not isinstance(cls.VERSION, cls.VERSION_TYPE):
+        if cls.class_registration and cls.VERSION_TYPE is not None and not isinstance(cls.VERSION, cls.VERSION_TYPE):
             cls.VERSION = cls.VERSION_TYPE(cls.VERSION)
 
         # Register the Subclass #
@@ -88,7 +90,7 @@ class VersionedClass(DispatchableClass, metaclass=VersionedMeta):
     @classmethod
     def get_registered_class(
         cls,
-        version: Version | str | Iterable,
+        version: Version | str | Iterable[Any],
         exact: bool = False,
         group: str | None = None,
         sort: bool = False,
@@ -112,7 +114,7 @@ class VersionedClass(DispatchableClass, metaclass=VersionedMeta):
 
     # Version
     @classmethod
-    def get_version_from_object(cls, obj: Any) -> Version | str | Iterable:
+    def get_version_from_object(cls, obj: Any) -> Version | str | Iterable[Any]:
         """Returns a version extracted from an object.
 
         This abstract method should be implemented by the head class to support dispatching to the proper versioned
@@ -125,12 +127,13 @@ class VersionedClass(DispatchableClass, metaclass=VersionedMeta):
         Returns:
             The version, or a value that can be cast to the version type.
         """
-        raise NotImplementedError("This method needs to be set in the version head to dispatch the proper class.")
+        msg = "This method needs to be set in the version head to dispatch the proper class."
+        raise NotImplementedError(msg)
 
     @classmethod
     def get_version_class(
         cls,
-        version: Version | str | Iterable,
+        version: Version | str | Iterable[Any],
         exact: bool = False,
         group: str | None = None,
         sort: bool = False,
@@ -147,14 +150,21 @@ class VersionedClass(DispatchableClass, metaclass=VersionedMeta):
 
         Returns:
             The class matching the requested version.
+
+        Raises:
+            ValueError: If the class registry is not set.
         """
         if group is None:
             group = cls.default_group
 
+        if cls.class_registry is None:
+            msg = "Class registry is not set."
+            raise ValueError(msg)
+
         if sort:
             cls.class_registry.sort(group)
 
-        return cls.class_registry.get_class(version, exact=exact, group=group, module=module)
+        return cast("VersionedClass", cls.class_registry.get_class(version, exact=exact, group=group, module=module))
 
     @classmethod
     def get_latest_version_class(cls, group: str | None = None, sort: bool = False) -> "VersionedClass":
@@ -166,11 +176,18 @@ class VersionedClass(DispatchableClass, metaclass=VersionedMeta):
 
         Returns:
             The class associated with the latest version in the specified group.
+
+        Raises:
+            ValueError: If the class registry is not set.
         """
         if group is None:
             group = cls.default_group
 
+        if cls.class_registry is None:
+            msg = "Class registry is not set."
+            raise ValueError(msg)
+
         if sort:
             cls.class_registry.sort(group)
 
-        return cls.class_registry.get_latest_version(group)
+        return cast("VersionedClass", cls.class_registry.get_latest_version(group))

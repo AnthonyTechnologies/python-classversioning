@@ -7,6 +7,9 @@ the tests package is discoverable by pytest.
 """
 
 # Imports #
+# Standard Libraries #
+from typing import Any
+
 # Third-Party Packages #
 import pytest
 
@@ -15,7 +18,7 @@ _test_failed_incremental: dict[str, dict[tuple[int, ...], str]] = {}
 
 
 # Functions #
-def pytest_runtest_makereport(item, call) -> None:
+def pytest_runtest_makereport(item: Any, call: Any) -> None:
     """Handles reports on incremental test calls which are dependent on the success of previous test calls."""
     if "incremental" in item.keywords:
         # incremental marker is used
@@ -30,7 +33,7 @@ def pytest_runtest_makereport(item, call) -> None:
             _test_failed_incremental.setdefault(cls_name, {}).setdefault(parametrize_index, test_name)
 
 
-def pytest_runtest_setup(item) -> None:
+def pytest_runtest_setup(item: Any) -> None:
     """Implements incremental to make test calls in classes dependent on the success of previous test calls."""
     if "incremental" in item.keywords:
         # retrieve the class name of the test

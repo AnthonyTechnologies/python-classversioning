@@ -19,20 +19,21 @@ __version__ = "0.8.0"
 
 
 # Imports #
-# Standard Library #
-from typing import Any, ClassVar, Iterable, Type
+# Standard Libraries #
+from typing import Any, ClassVar
+from collections.abc import Iterable
 
-# Third-Party #
+# Third-Party Packages #
 import pytest
-from baseobjects.testsuite import BaseRegisteredClassTestSuite
+from baseobjects.testsuite import BaseRegisteredClassTestSuite  # type: ignore
 
-# Local Imports #
+# Local Packages #
 from ..versionedclass import VersionedClass
 
 
 # Definitions #
 # Classes
-class VersionedClassTestSuite(BaseRegisteredClassTestSuite):
+class VersionedClassTestSuite(BaseRegisteredClassTestSuite):  # type: ignore[misc]
     """Reusable base tests for a VersionedClass hierarchy.
 
     Subclass this in your test modules and set the class attributes to supply concrete
@@ -81,7 +82,7 @@ class VersionedClassTestSuite(BaseRegisteredClassTestSuite):
         """
         super().test_copy_method(test_object)
 
-    def test_deepcopy(self, test_object: Any, memo: dict | None = None) -> None:
+    def test_deepcopy(self, test_object: Any, memo: dict[Any, Any] | None = None) -> None:
         """Tests the deepcopy method.
 
         Args:
@@ -90,7 +91,7 @@ class VersionedClassTestSuite(BaseRegisteredClassTestSuite):
         """
         super().test_deepcopy(test_object, memo=memo)
 
-    def test_deepcopy_method(self, test_object: Any, memo: dict | None = None) -> None:
+    def test_deepcopy_method(self, test_object: Any, memo: dict[Any, Any] | None = None) -> None:
         """Tests the deepcopy_method.
 
         Args:
@@ -116,24 +117,28 @@ class VersionedClassTestSuite(BaseRegisteredClassTestSuite):
             *args: Positional arguments to pass to the register_class method.
             **kwargs: Keyword arguments to pass to the register_class method.
         """
+        if self.TestClass.VERSION_TYPE is None:
+            pytest.skip("TestClass.VERSION_TYPE is not set.")
 
-        class NewTestSubclass(self.TestClass):
+        class NewTestSubclass(self.TestClass):  # type: ignore
             class_registration = False
-            VERSION = self.TestClass.VERSION_TYPE((0, 0, 0))
+            VERSION = self.TestClass.VERSION_TYPE((0, 0, 0))  # type: ignore
 
         # Register class
         NewTestSubclass.register_class(*args, **kwargs)
 
         # Verify class was registered
         group = kwargs.get("group", "default")
+        if self.TestClass.class_registry is None:
+            pytest.fail("TestClass.class_registry is not set.")
         assert NewTestSubclass in self.TestClass.class_registry[group]
 
     # Tests
-    @pytest.mark.parametrize("key,expected,exact,group,sort,module", get_cases)  # type: ignore[misc]
+    @pytest.mark.parametrize(("key", "expected", "exact", "group", "sort", "module"), get_cases)
     def test_get_version_class(
         self,
         key: Any,
-        expected: Type[VersionedClass] | None,
+        expected: type[VersionedClass] | None,
         exact: bool,
         group: str | None,
         sort: bool,
@@ -155,11 +160,11 @@ class VersionedClassTestSuite(BaseRegisteredClassTestSuite):
         cls = self.TestClass.get_version_class(key, exact=exact, group=group, sort=sort, module=module)
         assert cls is expected
 
-    @pytest.mark.parametrize("key,expected,exact,group,sort,module", registered_cases)  # type: ignore[misc]
+    @pytest.mark.parametrize(("key", "expected", "exact", "group", "sort", "module"), registered_cases)
     def test_get_registered_class(
         self,
         key: Any,
-        expected: Type[VersionedClass] | None,
+        expected: type[VersionedClass] | None,
         exact: bool,
         group: str | None,
         sort: bool,

@@ -24,10 +24,8 @@ from typing import Any
 from warnings import warn
 
 # Third-Party Packages #
-from baseobjects import SEARCHSENTINEL
-from baseobjects.classregistration import BaseClassRegistry
-
-# Local Packages #
+from baseobjects import SEARCHSENTINEL  # type: ignore
+from baseobjects.classregistration import BaseClassRegistry  # type: ignore
 
 
 # Definitions #
@@ -54,13 +52,13 @@ class VersionRegistry(BaseClassRegistry):
             import_module(module)
         except Exception as e:
             msg = f"Failed to import module '{module}' with error: {e}, skipping."
-            warn(msg)
+            warn(msg, stacklevel=2)
             return False
         else:
             return True
 
     # Registry
-    def register_class(self, cls: type, group: str = "default", *args: Any, **kwargs) -> None:
+    def register_class(self, cls: Any, group: str | None = "default", *args: Any, **kwargs: Any) -> None:
         """Adds a versioned class to the registry.
 
         Args:
@@ -68,11 +66,17 @@ class VersionRegistry(BaseClassRegistry):
             group: The group name under which to register the class.
             *args: Positional arguments to pass to the registry.
             **kwargs: Keyword arguments to pass to the registry.
+
+        Raises:
+            TypeError: If the class version type is incompatible with the registry head class.
         """
-        if self.head_class is not None and not isinstance(cls.VERSION, self.head_class.VERSION_TYPE):
+        if group is None:
+            group = "default"
+
+        if self.head_class is not None and not isinstance(cls.VERSION, self.head_class.VERSION_TYPE):  # type: ignore
             msg = (
-                f"The registered class {str(cls)} has a version type of {str(cls.VERSION.VERSION_TYPE)} "
-                f"which is not compatible with the registry's head class {str(self.head_class)}."
+                f"The registered class {cls!s} has a version type of {cls.VERSION.VERSION_TYPE!s} "
+                f"which is not compatible with the registry's head class {self.head_class!s}."
             )
             raise TypeError(msg)
 
@@ -113,26 +117,25 @@ class VersionRegistry(BaseClassRegistry):
             if default is SEARCHSENTINEL:
                 msg = f"Group '{group}' not found."
                 raise KeyError(msg)
-            else:
-                return default
+            return default
 
         # Ensure key is the correct type
-        if not isinstance(key, self.head_class.VERSION_TYPE):
-            key = self.head_class.VERSION_TYPE.cast(key)
+        if self.head_class is not None and not isinstance(key, self.head_class.VERSION_TYPE):  # type: ignore
+            key = self.head_class.VERSION_TYPE.cast(key)  # type: ignore
 
         # Search for version
-        index = None
-        while exact:
+        index = -1
+        if exact:
             try:
                 index = group_versions.index(key)
             except ValueError:
-                if index is not None:
-                    break
-                if module is not None:
-                    self._load_module(module)
-                index = -1
-            else:
-                break
+                if module is not None and self._load_module(module):
+                    try:
+                        index = group_versions.index(key)
+                    except ValueError:
+                        index = -1
+                else:
+                    index = -1
 
         if not exact:
             index = bisect.bisect_right(group_versions, key) - 1
@@ -142,12 +145,11 @@ class VersionRegistry(BaseClassRegistry):
         if index < 0:
             if default is SEARCHSENTINEL:
                 if exact:
-                    msg = f"Exact version {str(key)} not found."
+                    msg = f"Exact version {key!s} not found."
                 else:
-                    msg = f"Version needs to be greater than {str(group_versions[0])}, {str(key)} is not."
+                    msg = f"Version needs to be greater than {group_versions[0]!s}, {key!s} is not."
                 raise ValueError(msg)
-            else:
-                return default
+            return default
         else:
             return group_versions[index]
 
@@ -164,13 +166,15 @@ class VersionRegistry(BaseClassRegistry):
         versions = self.data.get(group, None)
         return versions[-1] if versions or default is SEARCHSENTINEL else default
 
-    def get_version_type(self) -> type:
+    def get_version_type(self) -> type | None:
         """Gets the type of version being used.
 
         Returns:
             The version type used by the head class for this registry.
         """
-        return self.head_class.VERSION_TYPE
+        if self.head_class is None:
+            return None
+        return self.head_class.VERSION_TYPE  # type: ignore
 
     def sort(self, group: str = "default", **kwargs: Any) -> None:
         """Sorts the registry.

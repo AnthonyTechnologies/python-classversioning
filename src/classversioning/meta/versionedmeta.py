@@ -19,18 +19,17 @@ __version__ = "0.8.0"
 
 # Imports #
 # Standard Libraries #
+from abc import ABCMeta
 from typing import Any
 
 # Third-Party Packages #
-from baseobjects import BaseMeta
-from baseobjects.versioning import Version
-
-# Local Packages #
+from baseobjects import BaseMeta  # type: ignore
+from baseobjects.versioning import Version  # type: ignore
 
 
 # Definitions #
 # Classes #
-class VersionedMeta(BaseMeta):
+class VersionedMeta(BaseMeta, ABCMeta):  # type: ignore
     """A metaclass that enables version-aware class comparisons.
 
     Classes using this metaclass can define a version type and a version value to support ordering and equality
@@ -40,18 +39,19 @@ class VersionedMeta(BaseMeta):
         VERSION_TYPE: The concrete version type used by classes (e.g., Version).
         VERSION: The version value associated with the class (an instance of VERSION_TYPE).
     """
+
     VERSION_TYPE: type | None = None
     VERSION: Version | None = None
 
     # Magic Methods
     # Representation
-    def __hash__(self) -> int:
+    def __hash__(cls) -> int:
         """Overrides hash to make the class hashable.
 
         Returns:
             The system ID of the class.
         """
-        return id(self)
+        return id(cls)
 
     # Comparison
     def __eq__(cls, other: Any) -> bool:
@@ -62,30 +62,15 @@ class VersionedMeta(BaseMeta):
 
         Returns:
             True if equivalent to this class, including version.
-
-        Raises:
-            TypeError: If other is not a comparable type.
         """
         if isinstance(other, cls.__class__):
-            if id(cls) == id(object):
+            if id(cls) == id(other):
                 return True
-            elif cls.VERSION_TYPE != other.VERSION_TYPE:
+            elif cls.VERSION is None:
                 return False
-            other_version = other.VERSION
-        elif isinstance(other, Version):
-            other_version = other
-        elif cls.VERSION is not None:
-            try:
-                other_version = cls.VERSION.cast(other)
-            except TypeError:
-                return super().__eq__(other)
-        else:
-            return super().__eq__(other)
+            other = other.VERSION
 
-        if isinstance(other_version, type(cls.VERSION)):
-            return cls.VERSION == other_version
-        else:
-            raise TypeError(f"'==' not supported between instances of '{str(cls)}' and '{str(other)}'")
+        return bool(cls.VERSION == other)
 
     def __ne__(cls, other: Any) -> bool:
         """Returns True if the classes are not equal considering their versions.
@@ -95,28 +80,15 @@ class VersionedMeta(BaseMeta):
 
         Returns:
             True if not equivalent to this class, including version.
-
-        Raises:
-            TypeError: If other is not a comparable type.
         """
         if isinstance(other, cls.__class__):
-            if cls.VERSION_TYPE != other.VERSION_TYPE:
-                super().__ne__(other)
-            other_version = other.VERSION
-        elif isinstance(other, Version):
-            other_version = other
-        elif cls.VERSION is not None:
-            try:
-                other_version = cls.VERSION.cast(other)
-            except TypeError:
-                return super().__ne__(other)
-        else:
-            return super().__ne__(other)
+            if id(cls) == id(other):
+                return False
+            elif cls.VERSION is None:
+                return True
+            other = other.VERSION
 
-        if isinstance(other_version, type(cls.VERSION)):
-            return cls.VERSION != other_version
-        else:
-            raise TypeError(f"'!=' not supported between instances of '{str(cls)}' and '{str(other)}'")
+        return bool(cls.VERSION != other)
 
     def __lt__(cls, other: Any) -> bool:
         """Returns True if this class's version is less than the other's.
@@ -131,18 +103,18 @@ class VersionedMeta(BaseMeta):
             TypeError: If other is not a comparable type.
         """
         if isinstance(other, cls.__class__):
-            if cls.VERSION_TYPE != other.VERSION_TYPE:
-                raise TypeError(f"'<' not supported between instances of '{str(cls)}' and '{str(other)}'")
-            other_version = other.VERSION
-        elif isinstance(other, Version):
-            other_version = other
-        else:
-            other_version = cls.VERSION.cast(other)
+            if cls.VERSION is None:
+                msg = f"'<' not supported between instances of '{cls!s}' and '{other!s}' (version is None)"
+                raise TypeError(msg)
+            if id(cls) == id(other):
+                return False
+            other = other.VERSION
 
-        if isinstance(other_version, type(cls.VERSION)):
-            return cls.VERSION < other_version
-        else:
-            raise TypeError(f"'<' not supported between instances of '{str(cls)}' and '{str(other)}'")
+        try:
+            return bool(cls.VERSION < other)
+        except TypeError as error:
+            msg = f"'<' not supported between instances of '{cls!s}' and '{other!s}'"
+            raise TypeError(msg) from error
 
     def __gt__(cls, other: Any) -> bool:
         """Returns True if this class's version is greater than the other's.
@@ -157,18 +129,18 @@ class VersionedMeta(BaseMeta):
             TypeError: If other is not a comparable type.
         """
         if isinstance(other, cls.__class__):
-            if cls.VERSION_TYPE != other.VERSION_TYPE:
-                raise TypeError(f"'>' not supported between instances of '{str(cls)}' and '{str(other)}'")
-            other_version = other.VERSION
-        elif isinstance(other, Version):
-            other_version = other
-        else:
-            other_version = cls.VERSION.cast(other)
+            if cls.VERSION is None:
+                msg = f"'>' not supported between instances of '{cls!s}' and '{other!s}' (version is None)"
+                raise TypeError(msg)
+            if id(cls) == id(other):
+                return False
+            other = other.VERSION
 
-        if isinstance(other_version, type(cls.VERSION)):
-            return cls.VERSION > other_version
-        else:
-            raise TypeError(f"'>' not supported between instances of '{str(cls)}' and '{str(other)}'")
+        try:
+            return bool(cls.VERSION > other)
+        except TypeError as error:
+            msg = f"'>' not supported between instances of '{cls!s}' and '{other!s}'"
+            raise TypeError(msg) from error
 
     def __le__(cls, other: Any) -> bool:
         """Returns True if this class's version is <= the other's.
@@ -183,18 +155,18 @@ class VersionedMeta(BaseMeta):
             TypeError: If other is not a comparable type.
         """
         if isinstance(other, cls.__class__):
-            if cls.VERSION_TYPE != other.VERSION_TYPE:
-                raise TypeError(f"'<=' not supported between instances of '{str(cls)}' and '{str(other)}'")
-            other_version = other.VERSION
-        elif isinstance(other, Version):
-            other_version = other
-        else:
-            other_version = cls.VERSION.cast(other)
+            if cls.VERSION is None:
+                msg = f"'<=' not supported between instances of '{cls!s}' and '{other!s}' (version is None)"
+                raise TypeError(msg)
+            if id(cls) == id(other):
+                return True
+            other = other.VERSION
 
-        if isinstance(other_version, type(cls.VERSION)):
-            return cls.VERSION <= other_version
-        else:
-            raise TypeError(f"'<=' not supported between instances of '{str(cls)}' and '{str(other)}'")
+        try:
+            return bool(cls.VERSION <= other)
+        except TypeError as error:
+            msg = f"'<=' not supported between instances of '{cls!s}' and '{other!s}'"
+            raise TypeError(msg) from error
 
     def __ge__(cls, other: Any) -> bool:
         """Returns True if this class's version is >= the other's.
@@ -209,15 +181,15 @@ class VersionedMeta(BaseMeta):
             TypeError: If other is not a comparable type.
         """
         if isinstance(other, cls.__class__):
-            if cls.VERSION_TYPE != other.VERSION_TYPE:
-                raise TypeError(f"'>=' not supported between instances of '{str(cls)}' and '{str(other)}'")
-            other_version = other.VERSION
-        elif isinstance(other, Version):
-            other_version = other
-        else:
-            other_version = cls.VERSION.cast(other)
+            if cls.VERSION is None:
+                msg = f"'>=' not supported between instances of '{cls!s}' and '{other!s}' (version is None)"
+                raise TypeError(msg)
+            if id(cls) == id(other):
+                return True
+            other = other.VERSION
 
-        if isinstance(other_version, type(cls.VERSION)):
-            return cls.VERSION >= other_version
-        else:
-            raise TypeError(f"'>=' not supported between instances of '{str(cls)}' and '{str(other)}'")
+        try:
+            return bool(cls.VERSION >= other)
+        except TypeError as error:
+            msg = f"'>=' not supported between instances of '{cls!s}' and '{other!s}'"
+            raise TypeError(msg) from error

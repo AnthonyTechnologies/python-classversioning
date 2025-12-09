@@ -19,5 +19,7 @@ __version__ = "0.8.0"
 # Imports #
 # Local Packages #
 from .versionedclasstestsuite import VersionedClassTestSuite
+from .versionedmetatestsuite import VersionedMetaTestSuite
 from .versionregistrytestsuite import VersionRegistryTestSuite
 
+__all__ = ["VersionRegistryTestSuite", "VersionedClassTestSuite", "VersionedMetaTestSuite"]

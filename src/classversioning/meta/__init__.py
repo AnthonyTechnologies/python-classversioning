@@ -18,5 +18,7 @@ __version__ = "0.8.0"
 
 # Imports #
 # Local Packages #
-from .versionedmeta import VersionedMeta
 from .versionedinitmeta import VersionedInitMeta
+from .versionedmeta import VersionedMeta
+
+__all__ = ["VersionedInitMeta", "VersionedMeta"]

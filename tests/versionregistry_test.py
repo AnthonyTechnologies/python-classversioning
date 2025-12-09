@@ -19,8 +19,9 @@ from typing import Any
 
 # Third-Party Packages #
 import pytest
+from baseobjects.versioning import Version
 
-# Local Packages #
+# Source Packages #
 from classversioning import TriNumberVersion, VersionedClass, VersionRegistry
 from classversioning.testsuite import VersionRegistryTestSuite
 
@@ -32,13 +33,16 @@ class Head(VersionedClass):
     VERSION_TYPE = TriNumberVersion
     class_registration = False  # We will manually register
 
+
 class V1(Head):
     """Version 1."""
     VERSION = TriNumberVersion(1, 0, 0)
 
+
 class V2(Head):
     """Version 2."""
     VERSION = TriNumberVersion(2, 0, 0)
+
 
 class V3(Head):
     """Version 3."""
@@ -51,11 +55,11 @@ class TestVersionRegistry(VersionRegistryTestSuite):
     TestClass = VersionRegistry
 
     # Define example classes expected by the suite
-    ExampleClass1 = V1
-    ExampleClass2 = V2
+    ExampleClass1 = V1  # type: ignore
+    ExampleClass2 = V2  # type: ignore
 
     # Cases
-    register_cases = [("default",), ("custom_group",)]
+    register_cases = ["default", "custom_group"]
 
     get_cases = [
         # key, expected, exact, group, default
@@ -63,9 +67,9 @@ class TestVersionRegistry(VersionRegistryTestSuite):
         (TriNumberVersion(2, 0, 0), V2, True, "default", None),
         (TriNumberVersion(1, 0, 0), V1, False, "default", None),
         (TriNumberVersion(2, 0, 0), V2, False, "default", None),
-        (TriNumberVersion(3, 0, 0), None, True, "default", None), # Should fail
-        (TriNumberVersion(3, 0, 0), V2, False, "default", None), # Should return V2 (latest <= 3)
-        (TriNumberVersion(0, 1, 0), None, False, "default", None), # Should fail (no version <= 0.1.0)
+        (TriNumberVersion(3, 0, 0), None, True, "default", None),  # Should fail
+        (TriNumberVersion(3, 0, 0), V2, False, "default", None),  # Should return V2 (latest <= 3)
+        (TriNumberVersion(0, 1, 0), None, False, "default", None),  # Should fail (no version <= 0.1.0)
     ]
 
     latest_cases = [
@@ -89,7 +93,7 @@ class TestVersionRegistry(VersionRegistryTestSuite):
         """
         super().test_register_class(group, *args, **kwargs)
 
-    @pytest.mark.parametrize("key,expected,exact,group,default", get_cases)
+    @pytest.mark.parametrize(("key", "expected", "exact", "group", "default"), get_cases)
     def test_get_class(
         self,
         key: Any,
@@ -109,8 +113,8 @@ class TestVersionRegistry(VersionRegistryTestSuite):
         """
         super().test_get_class(key, expected, exact, group, default)
 
-    @pytest.mark.parametrize("group,expected", latest_cases)
-    def test_get_latest_version(self, group: str | None, expected: type[VersionedClass] | None) -> None:
+    @pytest.mark.parametrize(("group", "expected"), latest_cases)
+    def test_get_latest_version(self, group: str, expected: type[VersionedClass]) -> None:
         """Tests get_latest_version method.
 
         Args:

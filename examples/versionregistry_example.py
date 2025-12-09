@@ -21,7 +21,7 @@ __version__ = "0.8.0"
 
 
 # Imports #
-# Third-Party Packages #
+# Source Packages #
 from classversioning import TriNumberVersion, VersionedClass, VersionRegistry
 
 
