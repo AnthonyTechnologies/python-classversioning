@@ -23,7 +23,7 @@ from typing import Any, ClassVar
 
 # Third-Party Packages #
 import pytest
-from baseobjects.testsuite import BaseRegisteredClassTestSuite  # type: ignore
+from baseobjects.testsuite import BaseRegisteredClassTestSuite
 
 # Local Packages #
 from ..versionedclass import VersionedClass
@@ -31,7 +31,7 @@ from ..versionedclass import VersionedClass
 
 # Definitions #
 # Classes
-class VersionedClassTestSuite(BaseRegisteredClassTestSuite):  # type: ignore[misc]
+class VersionedClassTestSuite(BaseRegisteredClassTestSuite):
     """Reusable base tests for a VersionedClass hierarchy.
 
     Subclass this in your test modules and set the class attributes to supply concrete classes and parameters for the
@@ -39,7 +39,7 @@ class VersionedClassTestSuite(BaseRegisteredClassTestSuite):  # type: ignore[mis
     required dataset is missing.
 
     Required attributes for specific tests:
-        TestClass: The version head class (a subclass of VersionedClass). Required by all tests.
+        UnitTestClass: The version head class (a subclass of VersionedClass). Required by all tests.
         get_cases: Iterable of tuples (key, expected_cls, exact, group, sort, module)
             Used by test_get_version_class. "group" may be None to use the default.
         registered_cases: Iterable of tuples (key, expected_cls, exact, group, sort, module)
@@ -51,7 +51,7 @@ class VersionedClassTestSuite(BaseRegisteredClassTestSuite):  # type: ignore[mis
     """
 
     # Attributes
-    TestClass: ClassVar[type[VersionedClass]]
+    UnitTestClass: type[VersionedClass]
 
     # Optional datasets expected to be provided by subclasses
     get_cases: ClassVar[Iterable[tuple[Any, type[VersionedClass] | None, bool, str | None, bool, str | None]]] = ()
@@ -62,39 +62,6 @@ class VersionedClassTestSuite(BaseRegisteredClassTestSuite):  # type: ignore[mis
     latest_cases: ClassVar[Iterable[tuple[str | None, type[VersionedClass], bool]]] = ()
 
     # Implement abstract base tests concretely by delegating to super
-    def test_copy(self, test_object: Any) -> None:
-        """Tests the copy method.
-
-        Args:
-            test_object: The object to test copying.
-        """
-        super().test_copy(test_object)
-
-    def test_copy_method(self, test_object: Any) -> None:
-        """Tests the copy_method.
-
-        Args:
-            test_object: The object to test copying.
-        """
-        super().test_copy_method(test_object)
-
-    def test_deepcopy(self, test_object: Any, memo: dict[Any, Any] | None = None) -> None:
-        """Tests the deepcopy method.
-
-        Args:
-            test_object: The object to test deepcopying.
-            memo: The memoization dictionary to use.
-        """
-        super().test_deepcopy(test_object, memo=memo)
-
-    def test_deepcopy_method(self, test_object: Any, memo: dict[Any, Any] | None = None) -> None:
-        """Tests the deepcopy_method.
-
-        Args:
-            test_object: The object to test deepcopying.
-            memo: The memoization dictionary to use.
-        """
-        super().test_deepcopy_method(test_object, memo=memo)
 
     def test_pickling(self, test_object: Any) -> None:
         """Tests the pickling method.
@@ -113,21 +80,21 @@ class VersionedClassTestSuite(BaseRegisteredClassTestSuite):  # type: ignore[mis
             *args: Positional arguments to pass to the register_class method.
             **kwargs: Keyword arguments to pass to the register_class method.
         """
-        if self.TestClass.VERSION_TYPE is None:
-            pytest.skip("TestClass.VERSION_TYPE is not set.")
+        if self.UnitTestClass.VERSION_TYPE is None:
+            pytest.skip("UnitTestClass.VERSION_TYPE is not set.")
 
-        class NewTestSubclass(self.TestClass):  # type: ignore
+        class NewTestSubclass(self.UnitTestClass):  # type: ignore
             class_registration = False
-            VERSION = self.TestClass.VERSION_TYPE((0, 0, 0))  # type: ignore
+            VERSION = self.UnitTestClass.VERSION_TYPE((0, 0, 0))  # type: ignore
 
         # Register class
         NewTestSubclass.register_class(*args, **kwargs)
 
         # Verify class was registered
         group = kwargs.get("group", "default")
-        if self.TestClass.class_registry is None:
-            pytest.fail("TestClass.class_registry is not set.")
-        assert NewTestSubclass in self.TestClass.class_registry[group]
+        if self.UnitTestClass.class_registry is None:
+            pytest.fail("UnitTestClass.class_registry is not set.")
+        assert NewTestSubclass in self.UnitTestClass.class_registry[group]
 
     # Tests
     @pytest.mark.parametrize(("key", "expected", "exact", "group", "sort", "module"), get_cases)
@@ -153,7 +120,7 @@ class VersionedClassTestSuite(BaseRegisteredClassTestSuite):  # type: ignore[mis
             sort: If True, sort the registry before getting the class.
             module: Optional module to import if the class is not found.
         """
-        cls = self.TestClass.get_version_class(key, exact=exact, group=group, sort=sort, module=module)
+        cls = self.UnitTestClass.get_version_class(key, exact=exact, group=group, sort=sort, module=module)
         assert cls is expected
 
     @pytest.mark.parametrize(("key", "expected", "exact", "group", "sort", "module"), registered_cases)
@@ -179,7 +146,7 @@ class VersionedClassTestSuite(BaseRegisteredClassTestSuite):  # type: ignore[mis
             sort: If True, sort the registry before getting the class.
             module: Optional module to import if the class is not found.
         """
-        cls = self.TestClass.get_registered_class(key, exact=exact, group=group, sort=sort, module=module)
+        cls = self.UnitTestClass.get_registered_class(key, exact=exact, group=group, sort=sort, module=module)
         assert cls is expected
 
     def test_version_dispatch(self) -> None:
@@ -189,7 +156,7 @@ class VersionedClassTestSuite(BaseRegisteredClassTestSuite):  # type: ignore[mis
         subclass.
         """
         for dispatch_obj, expected_cls in self.auto_version_cases:
-            obj = self.TestClass(dispatch_obj)
+            obj = self.UnitTestClass(dispatch_obj)
             assert type(obj) is expected_cls
 
     def test_get_latest_version_class(self) -> None:
@@ -198,5 +165,5 @@ class VersionedClassTestSuite(BaseRegisteredClassTestSuite):  # type: ignore[mis
         Validates retrieving the class with the latest version from a group.
         """
         for group, expected_cls, sort in self.latest_cases:
-            cls = self.TestClass.get_latest_version_class(group=group, sort=sort)
+            cls = self.UnitTestClass.get_latest_version_class(group=group, sort=sort)
             assert cls is expected_cls

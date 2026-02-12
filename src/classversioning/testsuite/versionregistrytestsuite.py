@@ -16,13 +16,13 @@ __version__ = "0.8.0"
 # Imports #
 # Standard Libraries #
 from collections.abc import Iterable
-from typing import Any, ClassVar
+from typing import Any, ClassVar, cast
 from unittest.mock import patch
 
 # Third-Party Packages #
 import pytest
-from baseobjects.testsuite import BaseClassRegistryTestSuite  # type: ignore
-from baseobjects.versioning import TriNumberVersion, Version  # type: ignore
+from baseobjects.testsuite import BaseClassRegistryTestSuite
+from baseobjects.versioning import TriNumberVersion, Version
 
 # Local Packages #
 from ..versionedclass import VersionedClass
@@ -41,7 +41,18 @@ class VersionRegistryTestSuite(BaseClassRegistryTestSuite):
     """
 
     # Attributes #
-    TestClass: type[VersionRegistry] = VersionRegistry
+    UnitTestClass: type[VersionRegistry] = VersionRegistry
+
+    class _ExampleClass1(VersionedClass):
+        VERSION = TriNumberVersion(1, 0, 0)
+        VERSION_TYPE = TriNumberVersion
+
+    class _ExampleClass2(VersionedClass):
+        VERSION = TriNumberVersion(2, 0, 0)
+        VERSION_TYPE = TriNumberVersion
+
+    ExampleClass1: ClassVar[type[VersionedClass]] = _ExampleClass1
+    ExampleClass2: ClassVar[type[VersionedClass]] = _ExampleClass2
 
     # Tests #
     register_cases: ClassVar[Iterable[str | None]] = (None, "other")
@@ -67,7 +78,7 @@ class VersionRegistryTestSuite(BaseClassRegistryTestSuite):
         class C2(Head):
             VERSION = TriNumberVersion(2, 0, 0)
 
-        class_registry = self.TestClass(head_class=Head)
+        class_registry = self.UnitTestClass(head_class=Head)
         class_registry.register_class(C2, group=group)
         class_registry.register_class(C1, group=group)
 
@@ -126,8 +137,26 @@ class VersionRegistryTestSuite(BaseClassRegistryTestSuite):
         class_registry = self.create_test_registry()
         class_registry.register_class(self.ExampleClass2, group=group)
         class_registry.register_class(self.ExampleClass1, group=group)
-        cls = class_registry.get_latest_version(group)
+        cls = cast(VersionRegistry, class_registry).get_latest_version(group)
         assert cls is expected
+
+    def test_get_latest_version_missing_group_error(self) -> None:
+        """Tests that get_latest_version raises KeyError for missing group."""
+        registry = self.UnitTestClass()
+        with pytest.raises(KeyError, match="Group 'missing' not found or empty"):
+            registry.get_latest_version(group="missing")
+
+    def test_get_latest_version_empty_group_error(self) -> None:
+        """Tests that get_latest_version raises KeyError for empty group."""
+        registry = self.UnitTestClass()
+        registry.data["empty"] = []
+        with pytest.raises(KeyError, match="Group 'empty' not found or empty"):
+            registry.get_latest_version(group="empty")
+
+    def test_get_latest_version_default(self) -> None:
+        """Tests that get_latest_version returns default for missing group."""
+        registry = self.UnitTestClass()
+        assert registry.get_latest_version(group="missing", default="default") == "default"
 
     def test_sort(self) -> None:
         """Tests the sort method.
@@ -150,26 +179,26 @@ class VersionRegistryTestSuite(BaseClassRegistryTestSuite):
         class V3(Head, group="default"):
             VERSION = TriNumberVersion(3)
 
-        class V2_a(Head, group="default"):
+        class V2a(Head, group="default"):
             VERSION = TriNumberVersion(2)
 
-        class V2_b(Head, group="default"):
+        class V2b(Head, group="default"):
             VERSION = TriNumberVersion(2)
 
         # Create a registry for this head and register classes out of order
-        registry = self.TestClass(head_class=Head)
+        registry = self.UnitTestClass(head_class=Head)
 
         # Register in non-sorted order, with equal-version classes in a specific order to test stability
         registry.register_class(V3)
         registry.register_class(V1)
-        registry.register_class(V2_a)
-        registry.register_class(V2_b)
+        registry.register_class(V2a)
+        registry.register_class(V2b)
 
         # Explicitly sort (should be idempotent given insort, but we validate sort method behavior)
         registry.sort("default")
 
-        # Validate ascending order and stability between equal versions (V2_a before V2_b)
-        assert registry["default"] == [V1, V2_a, V2_b, V3]
+        # Validate ascending order and stability between equal versions (V2a before V2b)
+        assert registry["default"] == [V1, V2a, V2b, V3]
 
         # Latest version in the group should be V3
         assert registry.get_latest_version("default") is V3
@@ -184,7 +213,7 @@ class VersionRegistryTestSuite(BaseClassRegistryTestSuite):
         class Head(VersionedClass):
             VERSION_TYPE = TriNumberVersion
 
-        registry = self.TestClass(head_class=Head)
+        registry = self.UnitTestClass(head_class=Head)
 
         class ConcreteVersion(Version):
             def __init__(self, v: Any) -> None:
@@ -236,18 +265,18 @@ class VersionRegistryTestSuite(BaseClassRegistryTestSuite):
 
     def test_missing_group_error(self) -> None:
         """Tests that accessing a non-existent group raises KeyError."""
-        registry = self.TestClass()
+        registry = self.UnitTestClass()
         with pytest.raises(KeyError, match="Group 'missing' not found"):
             registry.get_class("1.0.0", group="missing")
 
     def test_default_return_missing_group(self) -> None:
         """Tests that default value is returned when group is missing."""
-        registry = self.TestClass()
+        registry = self.UnitTestClass()
         assert registry.get_class("missing", default="def") == "def"
 
     def test_default_return_empty_group(self) -> None:
         """Tests that default value is returned when group exists but is empty."""
-        registry = self.TestClass()
+        registry = self.UnitTestClass()
         registry.data["group"] = []
         assert registry.get_class("missing", group="group", default="def") == "def"
 
@@ -257,12 +286,12 @@ class VersionRegistryTestSuite(BaseClassRegistryTestSuite):
         class Head(VersionedClass):
             VERSION_TYPE = TriNumberVersion
 
-        registry = self.TestClass(head_class=Head)
+        registry = self.UnitTestClass(head_class=Head)
         assert registry.get_version_type() is TriNumberVersion
 
     def test_get_version_type_no_head_class(self) -> None:
         """Tests get_version_type returns None when no head class is set."""
-        registry = self.TestClass(head_class=None)
+        registry = self.UnitTestClass(head_class=None)
         assert registry.get_version_type() is None
 
     def test_register_class_default_group(self) -> None:
@@ -274,7 +303,7 @@ class VersionRegistryTestSuite(BaseClassRegistryTestSuite):
         class V1(Head):
             VERSION = TriNumberVersion(1)
 
-        registry = self.TestClass(head_class=Head)
+        registry = self.UnitTestClass(head_class=Head)
         registry.register_class(V1, group=None)
         assert registry.get_class(TriNumberVersion(1)) is V1
 
@@ -284,7 +313,7 @@ class VersionRegistryTestSuite(BaseClassRegistryTestSuite):
         Verifies that the registry attempts to import the specified module if the class is not found initially, and
         returns the expected result after the module side-effect.
         """
-        registry = self.TestClass()
+        registry = self.UnitTestClass()
         with patch("classversioning.versionregistry.import_module") as mock_import:
 
             def side_effect(name: str) -> None:
@@ -301,7 +330,7 @@ class VersionRegistryTestSuite(BaseClassRegistryTestSuite):
         Verifies behavior when module loading fails (ImportError), and checks logic for ValueError when exact version is
         not found or no version greater than requested is found.
         """
-        registry = self.TestClass()
+        registry = self.UnitTestClass()
 
         with patch("classversioning.versionregistry.import_module") as mock_import:
             mock_import.return_value = None

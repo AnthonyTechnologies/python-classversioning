@@ -20,7 +20,7 @@ __version__ = "0.8.0"
 # Standard Libraries #
 
 # Third-Party Packages #
-from baseobjects.metaclasses import InitMeta  # type: ignore
+from baseobjects.metaclasses import InitMeta
 
 # Local Packages #
 from .versionedmeta import VersionedMeta

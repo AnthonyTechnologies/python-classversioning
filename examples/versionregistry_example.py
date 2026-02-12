@@ -45,7 +45,7 @@ class ConfigLoaderV2(ConfigLoader):
     VERSION = TriNumberVersion(2, 0, 0)
 
 
-class ConfigLoaderV2_1(ConfigLoader):
+class ConfigLoaderV2_1(ConfigLoader):  # noqa: N801
     """Loader for version 2.1.0 configurations (TOML support)."""
     VERSION = TriNumberVersion(2, 1, 0)
 

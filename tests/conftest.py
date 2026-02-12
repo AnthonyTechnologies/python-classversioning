@@ -1,10 +1,17 @@
-#!/usr/bin/env python
 """conftest.py
-Pytest configuration hooks and helpers for the test suite.
-
-This module defines incremental-failure behavior via custom hooks and ensures
-the tests package is discoverable by pytest.
+Used for pytest directory-specific hook implementations and directory inclusion for imports.
 """
+
+# Header #
+__package_name__ = "classversioning"
+
+__author__ = "Anthony Fong"
+__credits__ = ["Anthony Fong"]
+__copyright__ = "Copyright 2021, Anthony Fong"
+__license__ = "MIT"
+
+__version__ = "0.8.0"
+
 
 # Imports #
 # Standard Libraries #

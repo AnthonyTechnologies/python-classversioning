@@ -2,20 +2,21 @@
 [project]
 # Project Details
 name = "classversioning"
+version = "0.8.0"
 description = "Tools for create versioning for classes using inheritance."
-dynamic = ["version", "readme"]  # Get the version and readme from the tool.poetry section
+readme = "README.rst"
 classifiers = ["Development Status :: 4 - Beta"]
 
 # Staff
-authors = [{name = "Anthony Fong"}]
-maintainers = [{name = "Anthony Fong"}]
+authors = [{name = "Anthony Fong", email = "FongAnthonyM@gmail.com"}]
+maintainers = [{name = "Anthony Fong", email = "FongAnthonyM@gmail.com"}]
 
 # License
 license = "MIT"
 license-files = ["LICENSE"]
 
 # Package Dependencies
-requires-python = ">=3.11"  # Upper bound defined in tool.poetry.dependencies
+requires-python = ">=3.14"
 dependencies = [
     "baseobjects>=1.12.0"
 ]
@@ -36,16 +37,15 @@ dev = [
     "isort>=5.10.1",
     "mypy>=0.930",
     "nox>=2025.5.1",
-    "nox-poetry>=1.2.0",
     "pep8-naming>=0.12.1",
+    "pip-audit>=2.10.0",
     "pre-commit>=2.16.0",
     "pre-commit-hooks>=4.1.0",
     "Pygments>=2.10.0",
     "pytest>=6.2.5",
     "pytest-asyncio>=1.2.0",
     "pyupgrade>=2.29.1",
-    "ruff>=0.14.0",
-    "safety>=1.10.3",
+    "ruff>=0.14.14",
     "sphinx>=4.3.2",
     "sphinx-autobuild>=2021.3.14",
     "sphinx-click>=3.0.2",
@@ -58,56 +58,16 @@ jupyter = [
     "jupyter>=1.1.1",
 ]
 
-
 # Project Build
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-
-# Poetry
-[tool.poetry]
-version = "0.8.0"
-readme = ["README.rst"]
-packages = [
-    { include = "classversioning", from = "src" },
-]
-
-# Lock Dependencies
-[tool.poetry.dependencies]
-python = ">=3.11, <4.0"
-bidict = ">=0.22.0"
-
-[tool.poetry.requires-plugins]
-poetry-plugin-export = ">=1.8"
+[tool.hatch.version]
+path = "src/classversioning/__init__.py"
 
 
 # Development Configurations
-# Coverage
-[tool.coverage.paths]
-source = ["src", "*/site-packages"]
-
-[tool.coverage.run]
-branch = true
-source = ["classversioning"]
-omit = ["*/header.py", "*/testsuite/*"]
-
-[tool.coverage.report]
-show_missing = true
-fail_under = 100
-
-
-# MYPY
-[tool.mypy]
-strict = true
-warn_unreachable = true
-pretty = true
-show_column_numbers = true
-show_error_codes = true
-show_error_context = true
-exclude = ["docs/"]
-
-
 # Ruff
 [tool.ruff]
 preview = true
@@ -175,6 +135,7 @@ select = [
 ]
 ignore = [
     "ANN401",  # Disallow typing.Any
+    "ASYNC109", # Disallow defining timeouts in functions
     "S101",  # Disallow assert
     "S301",  # Disallow pickle
     "S403",  # Disallow pickle, pickle.load, pickle.loads
@@ -183,15 +144,15 @@ ignore = [
     "A003",  # Disallow class attribute shadowing builtins
     "A005",  # Disallow class attribute shadowing module-level variables
     "RET505",  # Disallow unnecessary else after return statement
-    "N801",  # Class name must use CapWords convention
     "N812",  # Lowercase imports must be casted "as" lowercase as well
-    "DOC201",  # Returns must be documented in docstring
-    "DOC202",  # Disallow Returns in docstring if there are no Returns
+    "COM812",  # Trailing comma missing (the formatter will handle this)
     "D205",  # 1 blank line required between summary line and description
     "D401",  # Disallow imperative mood in docstring
     "D415",  # The first line must end with a period
-    "F401",  # All imports must be used
     "F403",  # Disallow wildcard imports (from module import *)
+    "F405",  # Disallow names defined from star imports
+    "RUF012",  # Multable class attriubes must be annotated with ClassVar
+    "RUF067",  # Disallow content in __init__ (false positive for metadata)
 ]
 # Allow fix for all enabled rules (when `--fix`) is provided.
 fixable = ["ALL"]
@@ -219,3 +180,37 @@ import_heading_stdlib = "Standard Libraries #"
 import_heading_thirdparty = "Third-Party Packages #"
 import_heading_firstparty = "Source Packages #"
 import_heading_localfolder = "Local Packages #"
+
+
+# MYPY
+[tool.mypy]
+strict = true
+warn_unreachable = true
+pretty = true
+show_column_numbers = true
+show_error_codes = true
+show_error_context = true
+exclude = ["docs/"]
+
+
+# Pytest
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "--verbose"
+testpaths = ["tests"]
+pythonpath = ["src"]
+norecursedirs = ["docs", "*.egg-info", ".nox", ".git"]
+
+
+# Coverage
+[tool.coverage.paths]
+source = ["src", "*/site-packages"]
+
+[tool.coverage.run]
+branch = true
+source = ["src/classversioning"]
+omit = ["*/header.py", "src/classversioning/testsuite/*"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 100

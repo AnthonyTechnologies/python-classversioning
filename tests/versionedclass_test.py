@@ -93,7 +93,7 @@ LATEST_CASES = [
 class TestExampleVersionedClass(VersionedClassTestSuite):
     """Concrete test suite for ExampleVersioning hierarchy."""
 
-    TestClass = ExampleVersioning
+    UnitTestClass = ExampleVersioning
 
     # Define cases attributes (for completeness, though not used by base decorator directly)
     get_cases = GET_CASES

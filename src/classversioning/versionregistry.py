@@ -20,16 +20,19 @@ __version__ = "0.8.0"
 # Standard Libraries #
 import bisect
 from importlib import import_module
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from warnings import warn
 
 # Third-Party Packages #
-from baseobjects import SEARCHSENTINEL  # type: ignore
-from baseobjects.classregistration import BaseClassRegistry  # type: ignore
+from baseobjects import SEARCHSENTINEL
+from baseobjects.classregistration import BaseClassRegistry
+
+if TYPE_CHECKING:  # Avoid circular imports but retain type checking.
+    # Local Packages #
+    from .versionedclass import VersionedClass
 
 
 # Definitions #
-# Constants #
 # Classes #
 class VersionRegistry(BaseClassRegistry):
     """A dictionary-like registry that holds versioned classes.
@@ -37,6 +40,9 @@ class VersionRegistry(BaseClassRegistry):
     Keys represent groups of related classes so their versions are not mixed. Each group's value is a list of classes
     ordered by their version.
     """
+
+    # Attributes #
+    head_class: type[VersionedClass] | None
 
     # Instance Methods #
     def _load_module(self, module: str) -> bool:
@@ -73,7 +79,11 @@ class VersionRegistry(BaseClassRegistry):
         if group is None:
             group = "default"
 
-        if self.head_class is not None and not isinstance(cls.VERSION, self.head_class.VERSION_TYPE):  # type: ignore
+        if (
+            self.head_class is not None
+            and self.head_class.VERSION_TYPE is not None
+            and not isinstance(cls.VERSION, self.head_class.VERSION_TYPE)
+        ):
             msg = (
                 f"The registered class {cls!s} has a version type of {cls.VERSION.VERSION_TYPE!s} "
                 f"which is not compatible with the registry's head class {self.head_class!s}."
@@ -120,8 +130,12 @@ class VersionRegistry(BaseClassRegistry):
             return default
 
         # Ensure key is the correct type
-        if self.head_class is not None and not isinstance(key, self.head_class.VERSION_TYPE):  # type: ignore
-            key = self.head_class.VERSION_TYPE.cast(key)  # type: ignore
+        if (
+            self.head_class is not None
+            and self.head_class.VERSION_TYPE is not None
+            and not isinstance(key, self.head_class.VERSION_TYPE)
+        ):
+            key = self.head_class.VERSION_TYPE.cast(key)
 
         # Search for version
         index = -1
@@ -162,9 +176,18 @@ class VersionRegistry(BaseClassRegistry):
 
         Returns:
             The class with the latest version for the specified group, or `default` if none exists.
+
+        Raises:
+            KeyError: If the group does not exist and no default is provided.
         """
         versions = self.data.get(group, None)
-        return versions[-1] if versions or default is SEARCHSENTINEL else default
+        if versions:
+            return versions[-1]
+
+        if default is SEARCHSENTINEL:
+            msg = f"Group '{group}' not found or empty."
+            raise KeyError(msg)
+        return default
 
     def get_version_type(self) -> type | None:
         """Gets the type of version being used.
@@ -174,7 +197,7 @@ class VersionRegistry(BaseClassRegistry):
         """
         if self.head_class is None:
             return None
-        return self.head_class.VERSION_TYPE  # type: ignore
+        return self.head_class.VERSION_TYPE
 
     def sort(self, group: str = "default", **kwargs: Any) -> None:
         """Sorts the registry.

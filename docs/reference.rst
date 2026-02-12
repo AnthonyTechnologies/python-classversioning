@@ -7,51 +7,31 @@ API Reference
     :backlinks: none
 
 
-classversioning
+ClassVersioning
 ---------------
-
 .. automodule:: classversioning
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
-Submodules
-----------
 
-classversioning.versionedclass
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automodule:: classversioning.versionedclass
+VersionedClass
+~~~~~~~~~~~~~~
+.. autoclass:: classversioning.versionedclass.VersionedClass
    :members:
-   :undoc-members:
-   :show-inheritance:
 
-classversioning.versionregistry
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automodule:: classversioning.versionregistry
+VersionRegistry
+~~~~~~~~~~~~~~~
+.. autoclass:: classversioning.versionregistry.VersionRegistry
    :members:
-   :undoc-members:
-   :show-inheritance:
 
 Meta
 ----
-
-classversioning.meta
-~~~~~~~~~~~~~~~~~~~~
 .. automodule:: classversioning.meta
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
-classversioning.meta.versionedinitmeta
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automodule:: classversioning.meta.versionedinitmeta
+VersionedMeta
+~~~~~~~~~~~~~
+.. autoclass:: classversioning.meta.versionedmeta.VersionedMeta
    :members:
-   :undoc-members:
-   :show-inheritance:
 
-classversioning.meta.versionedmeta
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automodule:: classversioning.meta.versionedmeta
+VersionedInitMeta
+~~~~~~~~~~~~~~~~~
+.. autoclass:: classversioning.meta.versionedinitmeta.VersionedInitMeta
    :members:
-   :undoc-members:
-   :show-inheritance:

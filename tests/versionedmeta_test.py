@@ -23,4 +23,4 @@ from classversioning.testsuite import VersionedMetaTestSuite
 # Classes #
 class TestVersionedMeta(VersionedMetaTestSuite):
     """Tests for VersionedMeta."""
-    TestMeta = VersionedMeta
+    UnitTestMeta = VersionedMeta

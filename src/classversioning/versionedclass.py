@@ -20,11 +20,11 @@ __version__ = "0.8.0"
 # Imports #
 # Standard Libraries #
 from collections.abc import Iterable
-from typing import Any, ClassVar, cast
+from typing import Any, ClassVar
 
 # Third-Party Packages #
-from baseobjects.classregistration import DispatchableClass  # type: ignore
-from baseobjects.versioning import Version  # type: ignore
+from baseobjects.classregistration import DispatchableClass
+from baseobjects.versioning import Version
 
 # Local Packages #
 from .meta import VersionedMeta
@@ -95,7 +95,7 @@ class VersionedClass(DispatchableClass, metaclass=VersionedMeta):
         group: str | None = None,
         sort: bool = False,
         module: str | None = None,
-    ) -> type["VersionedClass"]:
+    ) -> Any:
         """Gets a registered class based on the version.
 
         Args:
@@ -126,7 +126,7 @@ class VersionedClass(DispatchableClass, metaclass=VersionedMeta):
 
         Returns:
             The version, or a value that can be cast to the version type.
-        """
+        """  # noqa: DOC202
         msg = "This method needs to be set in the version head to dispatch the proper class."
         raise NotImplementedError(msg)
 
@@ -138,7 +138,7 @@ class VersionedClass(DispatchableClass, metaclass=VersionedMeta):
         group: str | None = None,
         sort: bool = False,
         module: str | None = None,
-    ) -> type["VersionedClass"]:
+    ) -> Any:
         """Gets a class based on the requested version.
 
         Args:
@@ -164,10 +164,10 @@ class VersionedClass(DispatchableClass, metaclass=VersionedMeta):
         if sort:
             cls.class_registry.sort(group)
 
-        return cast(type["VersionedClass"], cls.class_registry.get_class(version, exact=exact, group=group, module=module))
+        return cls.class_registry.get_class(version, exact=exact, group=group, module=module)
 
     @classmethod
-    def get_latest_version_class(cls, group: str | None = None, sort: bool = False) -> type["VersionedClass"]:
+    def get_latest_version_class(cls, group: str | None = None, sort: bool = False) -> Any:
         """Gets the class with the latest available version.
 
         Args:
@@ -190,4 +190,4 @@ class VersionedClass(DispatchableClass, metaclass=VersionedMeta):
         if sort:
             cls.class_registry.sort(group)
 
-        return cast(type["VersionedClass"], cls.class_registry.get_latest_version(group))
+        return cls.class_registry.get_latest_version(group)

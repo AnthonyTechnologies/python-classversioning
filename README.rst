@@ -1,5 +1,5 @@
 classversioning
-===============================
+===============
 
 |PyPI| |Status| |Python Version| |License|
 
@@ -99,7 +99,8 @@ This example demonstrates how to use the head class dispatch to automatically ha
 Requirements
 ------------
 
-* Python 3.11 or later
+* Python 3.14 or later
+* baseobjects
 
 Installation
 ------------
@@ -132,7 +133,7 @@ To learn more, see the `Contributor Guide`_.
 License
 -------
 
-Distributed under the terms of the MIT License, *classversioning* is free and open source software.
+Distributed under the terms of the `MIT license`_, *classversioning* is free and open source software.
 
 
 Issues
@@ -149,6 +150,7 @@ Project Organization: `Anthony's Python Style Guide`_ based on `The Google Style
 
 .. _pip: https://pip.pypa.io/
 .. _PyPI: https://pypi.org/
+.. _MIT license: https://opensource.org/licenses/MIT
 .. _file an issue: https://github.com/AnthonyTechnologies/python-classversioning/issues
 .. _Anthony's Python Style Guide: https://github.com/AnthonyTechnologies/python-styleguide
 .. _The Google Style Guide: https://google.github.io/styleguide/pyguide.html

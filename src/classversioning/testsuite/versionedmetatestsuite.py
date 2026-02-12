@@ -18,12 +18,12 @@ __version__ = "0.8.0"
 import operator
 from collections.abc import Callable
 from typing import Any, ClassVar
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 # Third-Party Packages #
 import pytest
-from baseobjects.testsuite import BaseTestSuite  # type: ignore[attr-defined]
-from baseobjects.versioning import TriNumberVersion, Version  # type: ignore
+from baseobjects.testsuite import BaseTestSuite
+from baseobjects.versioning import TriNumberVersion, Version
 
 # Local Packages #
 from ..meta import VersionedMeta
@@ -31,11 +31,11 @@ from ..meta import VersionedMeta
 
 # Definitions #
 # Classes #
-class VersionedMetaTestSuite(BaseTestSuite):  # type: ignore[misc]
+class VersionedMetaTestSuite(BaseTestSuite):
     """Reusable test suite for VersionedMeta."""
 
-    TestMeta: ClassVar[type[VersionedMeta]]
-    version_type: ClassVar[type[Version]] = TriNumberVersion
+    UnitTestMeta: type[VersionedMeta]
+    version_type: type[Version] = TriNumberVersion
     first_version: Version = TriNumberVersion(1, 0, 0)
     second_version: Version = TriNumberVersion(2, 0, 0)
 
@@ -49,7 +49,7 @@ class VersionedMetaTestSuite(BaseTestSuite):  # type: ignore[misc]
         """
         v_1 = self.first_version
         v_2 = self.second_version
-        test_meta: type[VersionedMeta] = self.TestMeta
+        test_meta: type[VersionedMeta] = self.UnitTestMeta
 
         class Head(metaclass=test_meta):  # type: ignore[metaclass]
             VERSION_TYPE = self.version_type

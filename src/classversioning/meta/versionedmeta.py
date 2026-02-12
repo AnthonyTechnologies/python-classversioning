@@ -23,21 +23,17 @@ from abc import ABCMeta
 from typing import Any
 
 # Third-Party Packages #
-from baseobjects import BaseMeta  # type: ignore
-from baseobjects.versioning import Version  # type: ignore
+from baseobjects import BaseMeta
+from baseobjects.versioning import Version
 
 
 # Definitions #
 # Classes #
-class VersionedMeta(BaseMeta, ABCMeta):  # type: ignore
+class VersionedMeta(BaseMeta, ABCMeta):
     """A metaclass that enables version-aware class comparisons.
 
     Classes using this metaclass can define a version type and a version value to support ordering and equality
     comparisons using standard operators.
-
-    Attributes:
-        VERSION_TYPE: The concrete version type used by classes (e.g., Version).
-        VERSION: The version value associated with the class (an instance of VERSION_TYPE).
     """
 
     VERSION_TYPE: type | None = None

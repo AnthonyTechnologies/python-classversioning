@@ -48,10 +48,10 @@ htmlcov
 # IDE project files
 .project
 .pydevproject
-../.idea
 .idea
 .junie
 .vscode
+.agent
 *.iml
 *.komodoproject
 

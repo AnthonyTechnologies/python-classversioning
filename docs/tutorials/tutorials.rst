@@ -1,7 +1,7 @@
 Tutorials and Examples
 ======================
 
-.. contents:: On This Page
+.. contents:: Contents
    :local:
    :backlinks: none
 
@@ -27,6 +27,6 @@ Code Examples
 
 The ``examples/`` directory contains Python scripts demonstrating key features:
 
-* **versionedclass_example.py**: Basic usage of ``VersionedClass``.
-* **versionregistry_example.py**: How to use the ``VersionRegistry``.
-* **file_manager_example.py**: An example of building a file manager with versioned classes.
+* ``versionedclass_example.py``: Basic usage of ``VersionedClass``.
+* ``versionregistry_example.py``: How to use the ``VersionRegistry``.
+* ``file_manager_example.py``: An example of building a file manager with versioned classes.

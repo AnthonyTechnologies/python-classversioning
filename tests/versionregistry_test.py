@@ -19,7 +19,6 @@ from typing import Any, ClassVar
 
 # Third-Party Packages #
 import pytest
-from baseobjects.versioning import Version  # type: ignore[attr-defined]
 
 # Source Packages #
 from classversioning import TriNumberVersion, VersionedClass, VersionRegistry
@@ -52,11 +51,11 @@ class V3(Head):
 class TestVersionRegistry(VersionRegistryTestSuite):
     """Concrete test suite for VersionRegistry."""
 
-    TestClass = VersionRegistry
+    UnitTestClass = VersionRegistry
 
     # Define example classes expected by the suite
-    ExampleClass1 = V1  # type: ignore
-    ExampleClass2 = V2  # type: ignore
+    ExampleClass1 = V1
+    ExampleClass2 = V2
 
     # Cases
     register_cases: ClassVar[list[str]] = ["default", "custom_group"]
@@ -80,7 +79,7 @@ class TestVersionRegistry(VersionRegistryTestSuite):
         """Creates a registry instance for testing."""
         # Ensure we pass the head class so validation passes
         kwargs.setdefault("head_class", Head)
-        return self.TestClass(*args, **kwargs)
+        return self.UnitTestClass(*args, **kwargs)
 
     @pytest.mark.parametrize("group", register_cases)
     def test_register_class(self, group: str | None, *args: Any, **kwargs: Any) -> None:

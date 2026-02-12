@@ -22,7 +22,7 @@ __version__ = "0.8.0"
 
 # Imports #
 # Third-Party Packages #
-from baseobjects.versioning import TriNumberVersion, Version  # type: ignore
+from baseobjects.versioning import TriNumberVersion, Version
 
 # Local Packages #
 from .meta import VersionedInitMeta, VersionedMeta

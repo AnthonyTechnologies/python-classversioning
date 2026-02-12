@@ -34,6 +34,8 @@ extensions = [
     "myst_parser",
 ]
 
+exclude_patterns = ["python-styleguide", "_build"]
+
 # Autodoc / Autosummary
 autodoc_typehints = "description"
 autosummary_generate = True

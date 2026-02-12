@@ -3,61 +3,80 @@
 Nox sessions.
 """
 
+# Header #
+__package_name__ = "classversioning"
+
+__author__ = "Anthony Fong"
+__credits__ = ["Anthony Fong"]
+__copyright__ = "Copyright 2021, Anthony Fong"
+__license__ = "MIT"
+
+__version__ = "1.12.0"
+
+
 # Imports #
 # Standard Libraries #
 import os
 import shlex
 import shutil
+import stat
 import sys
+from collections.abc import Callable
 from pathlib import Path
 from textwrap import dedent
+from typing import Any
 
 # Third-Party Packages #
 import nox
-
-try:
-    # Third-Party Packages #
-    from nox_poetry import Session, session
-except ImportError:
-    message = f"""\
-    Nox failed to import the 'nox-poetry' package.
-
-    Please install it using the following command:
-
-    {sys.executable} -m pip install nox-poetry"""
-    raise SystemExit(dedent(message)) from None
-
+from nox import Session, session
 
 # Definitions #
+# Constants #
 package = "classversioning"
-python_versions = ["3.12"]
+python_versions = ["3.14"]
 nox.needs_version = ">= 2021.6.6"
 nox.options.sessions = (
     "pre-commit",
-    "safety",
     "mypy",
     "tests",
     "typeguard",
     "xdoctest",
     "docs-build",
 )
+nox.options.default_venv_backend = "uv"
+
+
+# Functions #
+def on_rm_error(func: Callable[[str], None], path: str, exc_info: tuple[Any, Any, Any]) -> None:
+    """Error handler for shutil.rmtree.
+
+    If the error is due to an access error (read only file)
+    it attempts to add write permission and then retries.
+
+    If the error is for another reason it re-raises the error.
+
+    Usage : shutil.rmtree(path, onerror=on_rm_error)
+    """
+    if not os.access(path, os.W_OK):
+        Path(path).chmod(stat.S_IWRITE)
+        func(path)
+    else:
+        raise
 
 
 def activate_virtualenv_in_precommit_hooks(session: Session) -> None:
     """Activate virtualenv in hooks installed by pre-commit.
 
-    This function patches git hooks installed by pre-commit to activate the
-    session's virtual environment. This allows pre-commit to locate hooks in
-    that environment when invoked from git.
+    This function patches git hooks installed by pre-commit to activate the session's virtual environment. This allows
+    pre-commit to locate hooks in that environment when invoked from git.
 
     Args:
         session: The Session object.
     """
     assert session.bin is not None  # nosec
 
-    # Only patch hooks containing a reference to this session's bindir. Support
-    # quoting rules for Python and bash, but strip the outermost quotes so we
-    # can detect paths within the bindir, like <bindir>/python.
+    # Only patch hooks containing a reference to this session's bindir. Support quoting rules for Python and bash, but
+    # strip the outermost quotes so we can detect paths within the bindir, like <bindir>/python.
     bindirs = [
         bindir[1:-1] if bindir[0] in "'\"" else bindir for bindir in (repr(session.bin), shlex.quote(session.bin))
     ]
@@ -113,51 +132,35 @@ def activate_virtualenv_in_precommit_hooks(session: Session) -> None:
                 break
 
 
-@session(name="pre-commit", python=python_versions[0])
+# Sessions #
+# New Environments
+@session(name="pre-commit", python=python_versions[0], tags=["new_venv"])
 def precommit(session: Session) -> None:
     """Lint using pre-commit."""
     args = session.posargs or [
         "run",
         "--all-files",
         "--hook-stage=manual",
-        "--show-diff-on-failure",
     ]
-    session.install(
-        "isort",
-        "pep8-naming",
-        "pre-commit",
-        "pre-commit-hooks",
-        "pyupgrade",
-    )
     session.run("pre-commit", *args)
     if args and args[0] == "install":
         activate_virtualenv_in_precommit_hooks(session)
 
 
-@session(python=python_versions[0])
-def safety(session: Session) -> None:
-    """Scan dependencies for insecure packages."""
-    requirements = session.poetry.export_requirements()
-    session.install("safety")
-    session.run("safety", "check", "--full-report", f"--file={requirements}")
-
-
-@session(python=python_versions)
+@session(python=python_versions, tags=["new_venv"])
 def mypy(session: Session) -> None:
-    """Type-check using mypy."""
-    args = session.posargs or ["src", "tests", "docs/conf.py"]
+    """Static type checking using mypy."""
+    args = session.posargs or [".", "docs/conf.py"]
     session.install(".[dev]")
-    session.install("mypy", "pytest")
     session.run("mypy", *args)
     if not session.posargs:
         session.run("mypy", f"--python-executable={sys.executable}", "noxfile.py")
 
 
-@session(python=python_versions)
+@session(python=python_versions, tags=["new_venv"])
 def tests(session: Session) -> None:
     """Run the test suite."""
     session.install(".[dev]")
-    session.install("coverage[toml]", "pytest", "pytest-asyncio", "pygments")
     try:
         session.run("coverage", "run", "--parallel", "-m", "pytest", *session.posargs)
     finally:
@@ -165,7 +168,7 @@ def tests(session: Session) -> None:
             session.notify("coverage", posargs=[])
 
 
-@session(python=python_versions[0])
+@session(python=python_versions[0], tags=["new_venv"])
 def coverage(session: Session) -> None:
     """Produce the coverage report."""
     args = session.posargs or ["report"]
@@ -178,17 +181,16 @@ def coverage(session: Session) -> None:
     session.run("coverage", *args)
 
 
-@session(python=python_versions[0])
+@session(python=python_versions[0], tags=["new_venv"])
 def typeguard(session: Session) -> None:
     """Runtime type checking using Typeguard."""
     session.install(".[dev]")
-    session.install("pytest", "pytest-asyncio", "typeguard", "pygments")
     session.run("pytest", f"--typeguard-packages={package}", *session.posargs)
 
 
-@session(python=python_versions)
+@session(python=python_versions, tags=["new_venv"])
 def xdoctest(session: Session) -> None:
-    """Run examples with xdoctest."""
+    """Run in-line examples with xdoctest."""
     if session.posargs:
         args = [package, *session.posargs]
     else:
@@ -197,36 +199,118 @@ def xdoctest(session: Session) -> None:
             args.append("--colored=1")
 
     session.install(".[dev]")
-    session.install("xdoctest[colors]")
     session.run("python", "-m", "xdoctest", *args)
 
 
-@session(name="docs-build", python=python_versions[0])
+@session(name="docs-build", python=python_versions[0], tags=["new_venv"])
 def docs_build(session: Session) -> None:
     """Build the documentation."""
     args = session.posargs or ["docs", "docs/_build"]
     if not session.posargs and "FORCE_COLOR" in os.environ:
         args.insert(0, "--color")
-
     session.install(".[dev]")
-    session.install("sphinx", "sphinx-click", "sphinx-rtd-theme", "furo", "myst-parser")
 
     build_dir = Path("docs", "_build")
     if build_dir.exists():
-        shutil.rmtree(build_dir)
+        shutil.rmtree(build_dir, onerror=on_rm_error)
 
     session.run("sphinx-build", *args)
 
 
-@session(python=python_versions[0])
+@session(python=python_versions[0], tags=["new_venv"])
 def docs(session: Session) -> None:
     """Build and serve the documentation with live reloading on file changes."""
     args = session.posargs or ["--open-browser", "docs", "docs/_build"]
     session.install(".[dev]")
-    session.install("sphinx", "sphinx-autobuild", "sphinx-click", "sphinx-rtd-theme", "furo", "myst-parser", "pytest")
 
     build_dir = Path("docs", "_build")
     if build_dir.exists():
-        shutil.rmtree(build_dir)
+        shutil.rmtree(build_dir, onerror=on_rm_error)
+
+    session.run("sphinx-autobuild", *args)
+
+
+# Active Environment
+@session(name="pre-commit_active", python=python_versions[0], venv_backend="none", tags=["active_venv"])
+def precommit_active(session: Session) -> None:
+    """Lint using pre-commit in the active environment."""
+    args = session.posargs or [
+        "run",
+        "--all-files",
+        "--hook-stage=manual",
+    ]
+    session.run("pre-commit", *args)
+
+
+@session(python=python_versions, venv_backend="none", tags=["active_venv"])
+def mypy_active(session: Session) -> None:
+    """Static type checking using mypy in the active environment."""
+    args = session.posargs or [".", "docs/conf.py"]
+    session.run("mypy", *args)
+    if not session.posargs:
+        session.run("mypy", f"--python-executable={sys.executable}", "noxfile.py")
+
+
+@session(python=python_versions, venv_backend="none", tags=["active_venv"])
+def tests_active(session: Session) -> None:
+    """Run the test suite using the active environment."""
+    try:
+        session.run("coverage", "run", "--parallel", "-m", "pytest", *session.posargs)
+    finally:
+        if session.interactive:
+            session.notify("coverage_active", posargs=[])
+
+
+@session(python=python_versions[0], venv_backend="none", tags=["active_venv"])
+def coverage_active(session: Session) -> None:
+    """Produce the coverage report using the active environment."""
+    args = session.posargs or ["report"]
+
+    if not session.posargs and any(Path().glob(".coverage.*")):
+        session.run("coverage", "combine")
+
+    session.run("coverage", *args)
+
+
+@session(python=python_versions[0], venv_backend="none", tags=["active_venv"])
+def typeguard_active(session: Session) -> None:
+    """Runtime type checking using Typeguard in the active environment."""
+    session.run("pytest", f"--typeguard-packages={package}", *session.posargs)
+
+
+@session(python=python_versions, venv_backend="none", tags=["active_venv"])
+def xdoctest_active(session: Session) -> None:
+    """Runs in-line examples with xdoctest using the active environment."""
+    if session.posargs:
+        args = [package, *session.posargs]
+    else:
+        args = [f"--modname={package}", "--command=all"]
+        if "FORCE_COLOR" in os.environ:
+            args.append("--colored=1")
+    session.run("python", "-m", "xdoctest", *args)
+
+
+@session(name="docs-build_active", python=python_versions[0], venv_backend="none", tags=["active_venv"])
+def docs_build_active(session: Session) -> None:
+    """Build the documentation using the active environment."""
+    args = session.posargs or ["docs", "docs/_build"]
+    if not session.posargs and "FORCE_COLOR" in os.environ:
+        args.insert(0, "--color")
+
+    build_dir = Path("docs", "_build")
+    if build_dir.exists():
+        shutil.rmtree(build_dir, onerror=on_rm_error)
+
+    session.run("sphinx-build", *args)
+
+
+@session(python=python_versions[0], venv_backend="none")
+def docs_active(session: Session) -> None:
+    """Build and serve the documentation with live reloading on file changes using the active environment."""
+    args = session.posargs or ["--open-browser", "docs", "docs/_build"]
+
+    build_dir = Path("docs", "_build")
+    if build_dir.exists():
+        shutil.rmtree(build_dir, onerror=on_rm_error)
 
     session.run("sphinx-autobuild", *args)
